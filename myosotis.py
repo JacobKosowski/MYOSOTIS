@@ -310,7 +310,7 @@ if (EXTmodel == 'Dmodel'):
     elif (Rv == 5.5): 
         Drainemodel='source/Draine5p5.txt'
         DraineKappaV=7.313E+03
-    else: print('For Dmodel, R_V should be 3.1 or 4.0 or 5.5. If you need other Rv values please choose Fmodel'
+    else: print('For Dmodel, R_V should be 3.1 or 4.0 or 5.5. If you need other Rv values please choose Fmodel')
     DrainearrLamu,drainealbedo,drainecos,draineC,DrainearrKu,drainecos2=np.loadtxt(Drainemodel,usecols=(0,1,2,3,4,5),unpack=True)
     DrainearrLamu=DrainearrLamu*1.0E+4
     DrainearrKu=DrainearrKu/DraineKappaV
@@ -499,7 +499,7 @@ for ii in range(nstar):
 
 
 
-print('Number of stars in the FoV: ',nstars
+print('Number of stars in the FoV: ',nstars)
 
 
 hdu = fits.PrimaryHDU(sceneim)

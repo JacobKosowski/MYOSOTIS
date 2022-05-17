@@ -153,7 +153,7 @@ def extinctions(lam,Av,Rv):
       ax4 = 1.752 - 0.316*xarr - (0.104/((xarr - 4.67)**2.0 + 0.341)) +fax4
       bx4 = -3.090 + 1.825*xarr + (1.206/((xarr - 4.62)**2.0 + 0.263)) +fbx4
       Alam=Av*(ax4+bx4/Rv)
-    else:  print('Lambda,',lam,', is out of range for Fitzpatrick (1999) model!!!'
+    else:  print('Lambda,',lam,', is out of range for Fitzpatrick (1999) model!!!')
     return Alam
 
 def BCcal(wavelength,flux,lambdaF,weight,AVstar,Rv,Teff,par2vega,EXTmodel,DrainearrLam,DrainearrK): # sed, filter

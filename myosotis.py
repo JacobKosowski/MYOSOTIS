@@ -272,7 +272,7 @@ if (metallicityZ == 1.0):
 elif (metallicityZ == 0.5):
     evolutionary='Evolutionary/Z0p008.dat'
     foldersed='SEDs/Z0p5/'
-else: print('!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for LMC)'
+else: print('!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for LMC)')
 
 
 outputim     = project_name+'/'+project_name+'_image.fits' 

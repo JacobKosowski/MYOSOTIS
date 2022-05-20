@@ -12,88 +12,88 @@ import params
 pi=np.pi
 def myso_logo(wh):
     if (wh == 'logo'):        
-        print ' ================================================================================= '
-        print '|   ===============   Make   Your   Own Synthetic   ObservaTIonS  =============   |'
-        print '| =============================================================================== |'
-        print '||                                                                               ||'
-        print '|| |%|       |%| |%|   |%| |%||%||%| |%||%||%| |%||%||%| |%||%||%| |%| |%||%||%| ||'
-        print '|| |%||%| |%||%| |%|   |%| |%|   |%| |%|       |%|   |%|    |%|    |%| |%|       ||'
-        print '|| |%|  |%|  |%|    |%|    |%|   |%| |%||%||%| |%|   |%|    |%|    |%| |%||%||%| ||'
-        print '|| |%|  |%|  |%|    |%|    |%|   |%|       |%| |%|   |%|    |%|    |%|       |%| ||'
-        print '|| |%|  |%|  |%|    |%|    |%||%||%| |%||%||%| |%||%||%|    |%|    |%| |%||%||%  ||'
-        print '||                                                                               ||'
-        print '| =============================================================================== |'
-        print '||        MMMMMMMMMMMMMMMMMWN00KX0OOO0KNMMMMMMMMMMMMMMMMMMMM      ||'
-        print '||        MMMMMMMMMMMMMMMMW0dloddolcccld0NMMMMMMMMMMMMMMMMMM      ||'
-        print '||        MMMMMMMMMMMMMMMNklcloooooollccckWMMMMMMMMMMMMMMMMM      ||'
-        print '||        MMMMMMMMMMMMMMMKo::clooooollccclOWMMMMMMMMMMMMMMMM      ||'
-        print '||        MMMMMMMMMMMMMMWOl:ccclllllllccccoKMMMMMMMMMMMMMMMM      ||'
-        print '||        MMMMMMMMMMMMMMNxccccccclllllcccclkNMMMMMWWNXNNWMMM      ||'
-        print '||        MMMMMMMWWWWWWWNxcccc::::ccccc::ccxNMWNKOkxdoodxONM      ||'
-        print '||        MMMWX0OkkkxxxkOxcc::::;;::cc:::clONX0kxdxxxdoolcxN      ||'
-        print '||        MMXkllloooooooollloc::;;;:::::ldkOOkxkkkkkxxxddodK      ||'
-        print '||        MNd::cclloodddoolcoxd:,;:c:;:dOxddddddxdddddddoooO      ||'
-        print '||        Xxlccclllloooooll::dOkodkkxoxko:clooolccccccccc:cO      ||'
-        print '||        kllllccccc:cccclllldkkxdllooxxollcc::::cccccccclkN      ||'
-        print '||        klllcccc:::::::::cokxdc,...llool;,;;::::::::cldKWM      ||'
-        print '||        Xklcccc:::;;;;;;;;ldool;...llolddol:,,,;;::lxKWMMM      ||'
-        print '||        MWX0xlc::;;;,,,;cdkxdxdolcloxkxlllc;,,:oxk0XWMMMMM      ||'
-        print '||        MMMMWNK0Okxol;;::;;:lxolxkOxdkkoc;,,,,c0WMMMMMMMMM      ||'
-        print '||        MMMMMMMMMMWNxc:::;:cllccx00klldddolc:::l0WMMMMMMMM      ||'
-        print '||        MMMMMMMMMMWOlccccccllcccccllodddddolcccco0WMMMMMMM      ||'
-        print '||        MMMMMMMMMM0occ::clccclcccclodddddddoollccoKMMMMMMM      ||'
-        print '||        MMMMMMMMMWkccccccccccclolcdkxdxxxdddooolllxNMMMMMM      ||'
-        print '||        MMMMMMMMMNxcc::ccccclloxO0XWX0Oxxddddoooolo0WMMMMM      ||'
-        print '||        MMMMMMMMMNx::::ccclllokXWMMMMMWXKOxddooolllkWMMMMM      ||'
-        print '||        MMMMMMMMMMXxl::cllclxKWMMMMMMMMMMWNK0OxdodONMMMMMM      ||'
-        print '||        MMMMMMMMMMMWNOlccokKWMMMMMMMMMMMMMMMMMWNNWMMMMMMMM      ||'
-        print '||        MMMMMMMMMMMMMW0xkKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM      ||'
-        print ' =======================     FORGET ME NOT     ===================  '
+        print(' ================================================================================= ')
+        print('|   ===============   Make   Your   Own Synthetic   ObservaTIonS  =============   |')
+        print('| =============================================================================== |')
+        print('||                                                                               ||')
+        print('|| |%|       |%| |%|   |%| |%||%||%| |%||%||%| |%||%||%| |%||%||%| |%| |%||%||%| ||')
+        print('|| |%||%| |%||%| |%|   |%| |%|   |%| |%|       |%|   |%|    |%|    |%| |%|       ||')
+        print('|| |%|  |%|  |%|    |%|    |%|   |%| |%||%||%| |%|   |%|    |%|    |%| |%||%||%| ||')
+        print('|| |%|  |%|  |%|    |%|    |%|   |%|       |%| |%|   |%|    |%|    |%|       |%| ||')
+        print('|| |%|  |%|  |%|    |%|    |%||%||%| |%||%||%| |%||%||%|    |%|    |%| |%||%||%  ||')
+        print('||                                                                               ||')
+        print('| =============================================================================== |')
+        print('||        MMMMMMMMMMMMMMMMMWN00KX0OOO0KNMMMMMMMMMMMMMMMMMMMM      ||')
+        print('||        MMMMMMMMMMMMMMMMW0dloddolcccld0NMMMMMMMMMMMMMMMMMM      ||')
+        print('||        MMMMMMMMMMMMMMMNklcloooooollccckWMMMMMMMMMMMMMMMMM      ||')
+        print('||        MMMMMMMMMMMMMMMKo::clooooollccclOWMMMMMMMMMMMMMMMM      ||')
+        print('||        MMMMMMMMMMMMMMWOl:ccclllllllccccoKMMMMMMMMMMMMMMMM      ||')
+        print('||        MMMMMMMMMMMMMMNxccccccclllllcccclkNMMMMMWWNXNNWMMM      ||')
+        print('||        MMMMMMMWWWWWWWNxcccc::::ccccc::ccxNMWNKOkxdoodxONM      ||')
+        print('||        MMMWX0OkkkxxxkOxcc::::;;::cc:::clONX0kxdxxxdoolcxN      ||')
+        print('||        MMXkllloooooooollloc::;;;:::::ldkOOkxkkkkkxxxddodK      ||')
+        print('||        MNd::cclloodddoolcoxd:,;:c:;:dOxddddddxdddddddoooO      ||')
+        print('||        Xxlccclllloooooll::dOkodkkxoxko:clooolccccccccc:cO      ||')
+        print('||        kllllccccc:cccclllldkkxdllooxxollcc::::cccccccclkN      ||')
+        print('||        klllcccc:::::::::cokxdc,...llool;,;;::::::::cldKWM      ||')
+        print('||        Xklcccc:::;;;;;;;;ldool;...llolddol:,,,;;::lxKWMMM      ||')
+        print('||        MWX0xlc::;;;,,,;cdkxdxdolcloxkxlllc;,,:oxk0XWMMMMM      ||')
+        print('||        MMMMWNK0Okxol;;::;;:lxolxkOxdkkoc;,,,,c0WMMMMMMMMM      ||')
+        print('||        MMMMMMMMMMWNxc:::;:cllccx00klldddolc:::l0WMMMMMMMM      ||')
+        print('||        MMMMMMMMMMWOlccccccllcccccllodddddolcccco0WMMMMMMM      ||')
+        print('||        MMMMMMMMMM0occ::clccclcccclodddddddoollccoKMMMMMMM      ||')
+        print('||        MMMMMMMMMWkccccccccccclolcdkxdxxxdddooolllxNMMMMMM      ||')
+        print('||        MMMMMMMMMNxcc::ccccclloxO0XWX0Oxxddddoooolo0WMMMMM      ||')
+        print('||        MMMMMMMMMNx::::ccclllokXWMMMMMWXKOxddooolllkWMMMMM      ||')
+        print('||        MMMMMMMMMMXxl::cllclxKWMMMMMMMMMMWNK0OxdodONMMMMMM      ||')
+        print('||        MMMMMMMMMMMWNOlccokKWMMMMMMMMMMMMMMMMMWNNWMMMMMMMM      ||')
+        print('||        MMMMMMMMMMMMMW0xkKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM      ||')
+        print(' =======================     FORGET ME NOT     ===================  ')
 
     if (wh == 'star'): 
-        print ' =============================================================== '
-        print '|               READING YOUR STELLAR SOURCES FILE               |'
-        print ' =============================================================== '
-
+        print(' =============================================================== ')
+        print('|               READING YOUR STELLAR SOURCES FILE               |')
+        print(' =============================================================== ')
+        
     if (wh == 'cloud'):
-        print ' =============================================================== '
-        print '|                   READING YOUR CLOUD  FILE                    |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|                   READING YOUR CLOUD  FILE                    |')
+        print(' =============================================================== ')
 
     if (wh  == 'filter'):
-        print ' =============================================================== '
-        print '|                         READING FILTER                        |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|                         READING FILTER                        |')
+        print(' =============================================================== ')
  
     if (wh  == 'iso'):
-        print ' =============================================================== '
-        print '|                  READING EVOLUTIONARY MODELS                  |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|                  READING EVOLUTIONARY MODELS                  |')
+        print(' =============================================================== ')
 
     if (wh  == 'spec'):
-        print ' =============================================================== '
-        print '|                  SPECTRA CHANNEL is CREATED                   |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|                  SPECTRA CHANNEL is CREATED                   |')
+        print(' =============================================================== ')
  
     if (wh  == 'tlusty'):
-        print ' =============================================================== '
-        print '|                USING TLUSTY for MASSIVE STARs                 |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|                USING TLUSTY for MASSIVE STARs                 |')
+        print(' =============================================================== ')
 
     if (wh  == 'ao'):
-        print ' =============================================================== '
-        print '|              ADOPTIVE OPTICS is being APPLIED                 |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|              ADOPTIVE OPTICS is being APPLIED                 |')
+        print(' =============================================================== ')
  
     if (wh  == 'outim'):
-        print ' =============================================================== '
-        print '|            OUTPUT SYNTHETIC IMAGE is WRITTEN in :             |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|            OUTPUT SYNTHETIC IMAGE is WRITTEN in :             |')
+        print(' =============================================================== ')
  
     if (wh  == 'outspec'):
-        print ' =============================================================== '
-        print '|          OUTPUT SYNTHETIC SPECTRA CUBE is WRITTEN in :        |'
-        print ' =============================================================== '
+        print(' =============================================================== ')
+        print('|          OUTPUT SYNTHETIC SPECTRA CUBE is WRITTEN in :        |')
+        print(' =============================================================== ')
 
 def FINDCLOSE(par1,pararr):
     nclose=np.argsort(abs(np.add(-par1,pararr)))
@@ -153,7 +153,7 @@ def extinctions(lam,Av,Rv):
       ax4 = 1.752 - 0.316*xarr - (0.104/((xarr - 4.67)**2.0 + 0.341)) +fax4
       bx4 = -3.090 + 1.825*xarr + (1.206/((xarr - 4.62)**2.0 + 0.263)) +fbx4
       Alam=Av*(ax4+bx4/Rv)
-    else:  print 'Lambda,',lam,', is out of range for Fitzpatrick (1999) model!!!'
+    else:  print('Lambda,',lam,', is out of range for Fitzpatrick (1999) model!!!')
     return Alam
 
 def BCcal(wavelength,flux,lambdaF,weight,AVstar,Rv,Teff,par2vega,EXTmodel,DrainearrLam,DrainearrK): # sed, filter
@@ -272,7 +272,7 @@ if (metallicityZ == 1.0):
 elif (metallicityZ == 0.5):
     evolutionary='Evolutionary/Z0p008.dat'
     foldersed='SEDs/Z0p5/'
-else: print '!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for LMC)'
+else: print('!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for LMC)')
 
 
 outputim     = project_name+'/'+project_name+'_image.fits' 
@@ -310,7 +310,7 @@ if (EXTmodel == 'Dmodel'):
     elif (Rv == 5.5): 
         Drainemodel='source/Draine5p5.txt'
         DraineKappaV=7.313E+03
-    else: print 'For Dmodel, R_V should be 3.1 or 4.0 or 5.5. If you need other Rv values please choose Fmodel'
+    else: print('For Dmodel, R_V should be 3.1 or 4.0 or 5.5. If you need other Rv values please choose Fmodel')
     DrainearrLamu,drainealbedo,drainecos,draineC,DrainearrKu,drainecos2=np.loadtxt(Drainemodel,usecols=(0,1,2,3,4,5),unpack=True)
     DrainearrLamu=DrainearrLamu*1.0E+4
     DrainearrKu=DrainearrKu/DraineKappaV
@@ -319,7 +319,7 @@ if (EXTmodel == 'Dmodel'):
 xpix=round(fovx/res)
 ypix=round(fovy/res)
 
-print 'FoV: ',fovx,'" x ',fovy,'" =',int(xpix),'[pix] x',int(ypix),'[pix]'
+print('FoV: ',fovx,'" x ',fovy,'" =',int(xpix),'[pix] x',int(ypix),'[pix]')
 
 sceneim=np.full((int(ypix),int(xpix)),0.0)
 
@@ -369,7 +369,7 @@ newx=xstar*pc2pixstar #convert x[pc] into pixel position
 newy=ystar*pc2pixstar
 newz=zstar*pc2pixstar
 columncloud=np.zeros(nstar) #column density of the cloud in fron of each star
-print 'READ STARs: ',nstar
+print('READ STARs: ',nstar)
 
 if (Columndensities == 'sph'):
     myso_logo('cloud')
@@ -499,7 +499,7 @@ for ii in range(nstar):
 
 
 
-print 'Number of stars in the FoV: ',nstars
+print('Number of stars in the FoV: ',nstars)
 
 
 hdu = fits.PrimaryHDU(sceneim)
@@ -543,12 +543,12 @@ lunstarinfo.write('#Rv:  %f \n' %(Rv))
 lunstarinfo.close()
 
 myso_logo('outim')
-print outputim
-print '   '
+print(outputim)
+print('   ')
 myso_logo('outspec')
-print outputspecFL
-print outputspecL
-print  '   '
+print(outputspecFL)
+print(outputspecL)
+print('   ')
 stop = timeit.default_timer()
 
-print 'Simulation time using 1 core: ', (stop - start)/60. ,'[min]'  
+print('Simulation time using 1 core: ', (stop - start)/60. ,'[min]')

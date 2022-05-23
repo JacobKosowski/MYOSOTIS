@@ -1,6 +1,6 @@
 import params_clean as params
 
-# List of directories for SEDs, etc.
+# List of directories and key files for SEDs, dust models, etc.
 
 #SEDs
 foldersed='SEDs/'
@@ -24,4 +24,12 @@ else: print('!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for L
 draine3p1 = 'Dust/Draine3p1.txt'
 draine4 = 'Dust/Draine4.txt'
 draine5p5 = 'Dust/Draine5p5.txt'
+
+if (params.Rv == 3.1): 
+    Drainemodel=draine3p1
+elif (params.Rv == 4.0): 
+    Drainemodel=draine4
+elif (params.Rv == 5.5): 
+    Drainemodel=draine5p5
+else: print('For Dmodel, R_V should be 3.1 or 4.0 or 5.5. If you need other Rv values please choose Fmodel')
 

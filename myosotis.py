@@ -10,6 +10,7 @@ import timeit
 import params_clean as params
 import functions
 import directories
+import constants
 
 ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Start of runtime code
@@ -51,19 +52,7 @@ SR=params.SR
 Mbolsun = 4.77
 
 #######################################################################################################################
-# Assigns appropriate files
-
-# evolutionary='Evolutionary/Z0p015.dat'
-
-
-# if (metallicityZ == 1.0):
-#     evolutionary='Evolutionary/Z0p015.dat'
-#     foldersed='SEDs/Z1/'
-# elif (metallicityZ == 0.5):
-#     evolutionary='Evolutionary/Z0p008.dat'
-#     foldersed='SEDs/Z0p5/'
-# else: print('!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for LMC)')
-
+# Assigns output
 
 outputim     = project_name+'/'+project_name+'_image.fits' 
 outputimnoise=project_name+'/'+project_name+'_imageNoise.fits'
@@ -77,19 +66,9 @@ outputstarinfo  = project_name+'/'+project_name+'_star_info.txt'
 
 DrainearrLam, DrainearrK=[0.0],[0.0]
 if (EXTmodel == 'Dmodel'):
-    if (Rv == 3.1): 
-        Drainemodel='Dust/Draine3p1.txt'
-        DraineKappaV=8.551E+03
-    elif (Rv == 4.0): 
-        Drainemodel='Dust/Draine4.txt'
-        DraineKappaV=8.492E+03
-    elif (Rv == 5.5): 
-        Drainemodel='Dust/Draine5p5.txt'
-        DraineKappaV=7.313E+03
-    else: print('For Dmodel, R_V should be 3.1 or 4.0 or 5.5. If you need other Rv values please choose Fmodel')
-    DrainearrLamu,drainealbedo,drainecos,draineC,DrainearrKu,drainecos2=np.loadtxt(Drainemodel,usecols=(0,1,2,3,4,5),unpack=True)
-    DrainearrLamu=DrainearrLamu*1.0E+4
-    DrainearrKu=DrainearrKu/DraineKappaV
+    DrainearrLamu,drainealbedo,drainecos,draineC,DrainearrKu,drainecos2=np.loadtxt(directories.Drainemodel,usecols=(0,1,2,3,4,5),unpack=True)
+    DrainearrLamu = DrainearrLamu*1.0E+4
+    DrainearrKu = DrainearrKu/constants.DraineKappaV
     DrainearrLam, DrainearrK = zip(*sorted(zip(DrainearrLamu,DrainearrKu)))
 
 #######################################################################################################################
@@ -137,25 +116,7 @@ nstar,newx,newy,newz,vxstar,vystar,vzstar,distancestar,newxcloud,newycloud,newzc
 
 pc2pixstar=206264.806247/distancestar/params.res
 
-Teffstar=np.zeros(nstar)
-loggstar=np.zeros(nstar)
-loglstar=np.zeros(nstar)
-sedstar=np.zeros(nstar,dtype=np.uint64)
-fluxstar=np.zeros(nstar)
-columncloud=np.zeros(nstar) #column density of the cloud in fron of each star
 
-
-
-
-
-
-#######################################################################################################################
-# Reading the isochrones
-
-functions.myso_logo('iso')
-ziso,logageiso,miniiso,mactiso,logliso,logteff,loggiso=np.loadtxt(directories.isochrones,usecols=(0,1,2,3,4,5,6),unpack=True)
-teffiso=10.**logteff
-niso=len(miniiso)
 
 #######################################################################################################################
 # Reading list of SEDs
@@ -188,14 +149,28 @@ lunstarinfo.write("#     mass[mo] ,   logage[yr]  ,     Z      , log[Teff[k]] , 
 lunstarinfo.write("#       1              2             3            4              5              6           7               8            9            10                   11 \n")
 
 fovstars_check = np.full(nstar,False)
-nstars=0
+nfovstars=0
 for ii in range(nstar):
     if ((abs(newx[ii]) < (xpix/2)-1) and (abs(newy[ii]) < (ypix/2)-1)): # Check if star is within chosen FOV
         fovstars_check[ii] = True
-        nstars += 1
+
+        np.delete(logagestar,[ii])
+        np.delete(massstar,[ii])
+        np.delete(kzstar,[ii])
+        np.delete(newx,[ii])
+        np.delete(newy,[ii])
+        np.delete(newz,[ii])
+        np.delete(pc2pixstar,[ii])
 
 
+        nfovstars += 1
 
+Teffstar=np.zeros(nfovstars)
+loggstar=np.zeros(nfovstars)
+loglstar=np.zeros(nfovstars)
+sedstar=np.zeros(nfovstars,dtype=np.uint64)
+fluxstar=np.zeros(nfovstars)
+columncloud=np.zeros(nfovstars) #column density of the cloud in front of each star
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 # Add parallelization here
 # Each star is fully independent so this loop can be split as many times as needed
@@ -205,116 +180,100 @@ for ii in range(nstar):
 #   xpix, ypix,newx, newy, newz, newxcloud, newycloud, newzcloud, masspar, newhcloud, pc2pixstar, rhostar, logagestar, massstar, kzstar, ziso, logageiso, miniiso, mactiso, logliso, logteff, loggiso,
 #   Additional inputs********
 
+iso_load_flag = True
 nstars=0
-for ii in range(nstar):
-    if (fovstar_check[ii]): # Check if star is within chosen FOV
+for ii in range(nfovstars):
+    if True :#(fovstars_check[ii]): # Check if star is within chosen FOV
         nstars += 1
 
-        if (Columndensities == 'sph'):
-            columncloud[ii]=functions.COLUMN_DENSITY(newx[ii],newy[ii],newz[ii],newxcloud,newycloud,newzcloud,masspar,newhcloud)
-            cloudden=columncloud[ii]*((1.989/1.673534)/(((3.0857/pc2pixstar[ii])**2.))) #*1.0e21 ;convert column density unit [Msun/pix^2] --> [10^21 * Mhydrogen/cm^2]
-        else: cloudden=rhostar[ii]*((1.989/1.673534)/((3.0857**2.)))#*1.0e21 ;convert column density unit [Msun/pc^2] --> [10^21 * Mhydrogen/cm^2]
-        
-#        cloudden=rhostar[ii]*((1.989/1.673534)/((3.0857**2))) #*1.0e21 #convert column density unit [Msun/pc^2] --> [10^21 * Mhydrogen/cm^2]
-        AVstar=cloudden/2.21 #e21 ;Guver&Ozel2009: The relation between Optical Extinction and Hydrogen column density
-        nage=functions.FINDCLOSE(logagestar[ii],logageiso)
-        selectedage=logageiso[nage]
-        
-#####################
-        if abs(logageiso[nage]-logagestar[ii])/logagestar[ii] > 0.01:
-            nstars -= 1
-            continue
-        # logagestar[ii]=logageiso[nage]
+    # Density of gas clouds
+    if (Columndensities == 'sph'):
+        columncloud[ii]=functions.COLUMN_DENSITY(newx[ii],newy[ii],newz[ii],newxcloud,newycloud,newzcloud,masspar,newhcloud)
+        cloudden=columncloud[ii]*((1.989/1.673534)/(((3.0857/pc2pixstar[ii])**2.))) #*1.0e21 ;convert column density unit [Msun/pix^2] --> [10^21 * Mhydrogen/cm^2]
+    else: cloudden=rhostar[ii]*((1.989/1.673534)/((3.0857**2.)))#*1.0e21 ;convert column density unit [Msun/pc^2] --> [10^21 * Mhydrogen/cm^2]
+
+    #        cloudden=rhostar[ii]*((1.989/1.673534)/((3.0857**2))) #*1.0e21 #convert column density unit [Msun/pc^2] --> [10^21 * Mhydrogen/cm^2]
+    AVstar=cloudden/2.21 #e21 ;Guver&Ozel2009: The relation between Optical Extinction and Hydrogen column density
+    
+    # If lum, teff, and radius are not given, use isochrones to calculate appropriate values
+    if not params.LTRprovided:
+        if iso_load_flag:
+            functions.myso_logo('iso')
+            ziso,logageiso,miniiso,mactiso,logliso,logteff,loggiso=np.loadtxt(directories.isochrones,usecols=(0,1,2,3,4,5,6),unpack=True)
+            iso_load_flag = False
+
+        Teffstar[ii], loggstar[ii], loglstar[ii], flag = functions.get_iso_params(logagestar[ii],massstar[ii],kzstar[ii],ziso,logageiso,miniiso,mactiso,logliso,logteff,loggiso)
+        if flag: nstars-=1; continue
 
 
-        nmetalicity=functions.FINDCLOSE(kzstar[ii],ziso)
-        selectedz=ziso[nmetalicity]
+    deltaT=abs(Teffstar[ii]-teffsed)
 
-        marrtemp=np.full(niso,999.99)
-
-        for kk in range(niso):  
-            if ((ziso[kk] == selectedz) and (logageiso[kk] == selectedage)):  marrtemp[kk]=mactiso[kk]
-        ns=functions.FINDCLOSE(massstar[ii],marrtemp)
-
-        if abs(marrtemp[ns]-massstar[ii])/massstar[ii] > 0.01:
-            nstars -= 1
-            continue
-        # massstar[ii]=marrtemp[ns]
-
-        Teffstar[ii]=teffiso[ns]
-        loggstar[ii]=loggiso[ns]
-        loglstar[ii]=logliso[ns]
-##############################
-
-        deltaT=abs(Teffstar[ii]-teffsed)
-
-        deltagarr=np.full(nseds,99.)
+    deltagarr=np.full(nseds,99.)
 
 
-        for jj in range(nseds): 
-            if (deltaT[jj] == min(deltaT)):  deltagarr[jj]=abs(loggstar[ii]-loggsed[jj])
+    for jj in range(nseds): 
+        if (deltaT[jj] == min(deltaT)):  deltagarr[jj]=abs(loggstar[ii]-loggsed[jj])
 #        sedstar[ii]=where(deltagarr eq min(deltagarr))
-        sedstar[ii]=functions.FINDCLOSE(min(deltagarr),deltagarr)
-        readsed=sedname[sedstar[ii]]
+    sedstar[ii]=functions.FINDCLOSE(min(deltagarr),deltagarr)
+    readsed=sedname[sedstar[ii]]
 #        readcol,foldersed+sedname[sedstar[ii]],wavelength,flux,/silent
-        wavelength,flux=np.loadtxt(directories.foldersed+sedname[sedstar[ii]].decode('UTF-8'),comments=['fn:', '#'],unpack=True)
+    wavelength,flux=np.loadtxt(directories.foldersed+sedname[sedstar[ii]].decode('UTF-8'),comments=['fn:', '#'],unpack=True)
 
-        if ((OBtreatment == 'yes') and (Teffstar[ii] >= 15000.)):
-            deltaT=abs(Teffstar[ii]-teffsedOB)
-            deltagarr=np.full(nsedsOB,99.)
-            for jj in range(nsedsOB):  
-                if (deltaT[jj] == min(deltaT)):  deltagarr[jj]=abs(loggstar[ii]-loggsedOB[jj])
+    if ((OBtreatment == 'yes') and (Teffstar[ii] >= 15000.)):
+        deltaT=abs(Teffstar[ii]-teffsedOB)
+        deltagarr=np.full(nsedsOB,99.)
+        for jj in range(nsedsOB):  
+            if (deltaT[jj] == min(deltaT)):  deltagarr[jj]=abs(loggstar[ii]-loggsedOB[jj])
 #            sedstar[ii]=where(deltagarr eq min(deltagarr))
-            sedstar[ii]=functions.FINDCLOSE(min(deltagarr),deltagarr)
+        sedstar[ii]=functions.FINDCLOSE(min(deltagarr),deltagarr)
 
-            readsed=sednameOB[sedstar[ii]]
+        readsed=sednameOB[sedstar[ii]]
 #            readcol,foldersed+sednameOB[sedstar[ii]],wavelength,flux,/silent
-            wavelength,flux=np.loadtxt(directories.foldersed+sednameOB[sedstar[ii]].decode('UTF-8'),comments=['fn:', '#'],unpack=True)
+        wavelength,flux=np.loadtxt(directories.foldersed+sednameOB[sedstar[ii]].decode('UTF-8'),comments=['fn:', '#'],unpack=True)
 
 
-        bc1=functions.BCcal(wavelength,flux,lambdaF,weight,AVstar,Rv,Teffstar[ii],par2vega,EXTmodel,DrainearrLam,DrainearrK)
-        mag=Mbolsun-2.5*loglstar[ii]-(bc1)+5.0*log10(distancestar[ii]/10.0)
-        fluxstar[ii]=10.**(mag/(-2.5))
+    bc1=functions.BCcal(wavelength,flux,lambdaF,weight,AVstar,Rv,Teffstar[ii],par2vega,EXTmodel,DrainearrLam,DrainearrK)
+    mag=Mbolsun-2.5*loglstar[ii]-(bc1)+5.0*log10(distancestar[ii]/10.0)
+    fluxstar[ii]=10.**(mag/(-2.5))
 
-        lunstarinfo.write("%13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %60s \n" %(massstar[ii], logagestar[ii],kzstar[ii],log10(Teffstar[ii]),loggstar[ii],loglstar[ii],AVstar,mag,newx[ii]+xpix/2.,newy[ii]+ypix/2.,readsed.decode('UTF-8')))
+    lunstarinfo.write("%13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %60s \n" %(massstar[ii], logagestar[ii],kzstar[ii],log10(Teffstar[ii]),loggstar[ii],loglstar[ii],AVstar,mag,newx[ii]+xpix/2.,newy[ii]+ypix/2.,readsed.decode('UTF-8')))
 
-        if (PSFtype == 'gaussian'):
-            airy1=functions.makeGaussian((xpix,ypix),fwhm/res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
-        
+    if (PSFtype == 'gaussian'):
+        airy1=functions.makeGaussian((xpix,ypix),fwhm/res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
+
         airy1=airy1/np.sum(airy1) #to be sure about normaized total flux across FOV 
 
-        if (Adaptiveoptics == 'yes'):
-            halo=functions.makeGaussian((xpix,ypix),seeing/res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
-            halo=halo/np.sum(halo)
-            sceneim += fluxstar[ii]*(SR*airy1+(1.0-SR)*halo)
-        if (Adaptiveoptics == 'no'): sceneim += fluxstar[ii]*airy1
+    if (Adaptiveoptics == 'yes'):
+        halo=functions.makeGaussian((xpix,ypix),seeing/res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
+        halo=halo/np.sum(halo)
+        sceneim += fluxstar[ii]*(SR*airy1+(1.0-SR)*halo)
+    if (Adaptiveoptics == 'no'): sceneim += fluxstar[ii]*airy1
 
 
-        if (spectroscopy == 'yes'):
-            for ll in range(2,nspec-3): 
+    if (spectroscopy == 'yes'):
+        for ll in range(2,nspec-3): 
 #                linterp,lambda,weight,wavelength,wavelength_weight
-                wavelength_weight=np.interp(wavelength,lambdaF,weight)
-                bc3=functions.BCcals(wavelength,flux*wavelength_weight,[Lspecarr[ll-1],Lspecarr[ll],Lspecarr[ll+1],Lspecarr[ll+2]],[0.0,1.0,1.0,0.0],AVstar,Rv,Teffstar[ii],EXTmodel,DrainearrLam,DrainearrK)
-                mag3=Mbolsun-2.5*loglstar[ii]-bc3+5.0*log10(distancestar[ii]/10.0)
-                fluxstar3=float(10.**(mag3/(-2.5)))
-                if (PSFtype == 'gaussian'):
-                    airy3=functions.makeGaussian((xpix,ypix),fwhm/res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
+            wavelength_weight=np.interp(wavelength,lambdaF,weight)
+            bc3=functions.BCcals(wavelength,flux*wavelength_weight,[Lspecarr[ll-1],Lspecarr[ll],Lspecarr[ll+1],Lspecarr[ll+2]],[0.0,1.0,1.0,0.0],AVstar,Rv,Teffstar[ii],EXTmodel,DrainearrLam,DrainearrK)
+            mag3=Mbolsun-2.5*loglstar[ii]-bc3+5.0*log10(distancestar[ii]/10.0)
+            fluxstar3=float(10.**(mag3/(-2.5)))
+            if (PSFtype == 'gaussian'):
+                airy3=functions.makeGaussian((xpix,ypix),fwhm/res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
 
-                airy3=airy3/(np.sum(airy3))
+            airy3=airy3/(np.sum(airy3))
 
-                if (velocitydis == 'yes'):
-                    shiftv=vzstar[ii]*Lspecarr[ll]/3.0E+5 #shift is in A
-                    lambdashift=Lspecarr[ll]-shiftv        #if vz>0 ==> source comes toward observer ==> lambdashift<lamda0 (blue-shift)
-                    llchannel=functions.FINDCLOSE(lambdashift,Lspecarr)
-                    if (Adaptiveoptics == 'yes'): sceneimFL[llchannel,:,:] += fluxstar3*(SR*airy3+ (1.0-SR)*halo)
-                    if (Adaptiveoptics == 'no' ): sceneimFL[llchannel,:,:] += fluxstar3*airy3
+            if (velocitydis == 'yes'):
+                shiftv=vzstar[ii]*Lspecarr[ll]/3.0E+5 #shift is in A
+                lambdashift=Lspecarr[ll]-shiftv        #if vz>0 ==> source comes toward observer ==> lambdashift<lamda0 (blue-shift)
+                llchannel=functions.FINDCLOSE(lambdashift,Lspecarr)
+                if (Adaptiveoptics == 'yes'): sceneimFL[llchannel,:,:] += fluxstar3*(SR*airy3+ (1.0-SR)*halo)
+                if (Adaptiveoptics == 'no' ): sceneimFL[llchannel,:,:] += fluxstar3*airy3
 
-                elif (velocitydis == 'no'):
-                    if (Adaptiveoptics == 'yes'): sceneimFL[ll,:,:] += fluxstar3*(SR*airy3+ (1.0-SR)*halo)
-                    if (Adaptiveoptics == 'no' ): sceneimFL[ll,:,:] += fluxstar3*airy3
+            elif (velocitydis == 'no'):
+                if (Adaptiveoptics == 'yes'): sceneimFL[ll,:,:] += fluxstar3*(SR*airy3+ (1.0-SR)*halo)
+                if (Adaptiveoptics == 'no' ): sceneimFL[ll,:,:] += fluxstar3*airy3
 #Outputs
 #   nstars, sceneim, sceneimFL,
-
 
 
 print('Number of valid stars in the FoV: ',nstars)

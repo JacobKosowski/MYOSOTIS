@@ -1,6 +1,9 @@
-project_name='test11'
-filterfile='Filters/hst/wfpc2/HST-WFPC2.f555w.dat'
-filestar='Examples/Teststar1.txt'
+#Input parameters for synthetic observation
+
+project_name='test_BessV'
+filterfile='Filters/Generic/Bessell/Generic-Bessell.V.dat'
+filestar='Examples/Teststar2.txt'
+# filestar='Snaps/snap_data.txt'
 Columndensities='sph'
 filecloud= 'Examples/NoCloud'
 OBtreatment='yes'
@@ -10,10 +13,10 @@ metallicityZ=1.0 #should be 1.0 (for solar) or 0.5 (for LMC). this will affect c
 alphai=0.0
 bettai=0.0
 gammai=0.0
-res=0.05
-fovx=20.
-fovy=20.
-distance=50000.
+res=0.05 #0.05
+fovx=20. #20
+fovy=20. #arcsec
+distance=50000 #pc default 50000, 1AU=4.8481e-6pc
 fwhm=0.11
 SNR=0.0
 noise2add=6.15883e-12   #noise in the unit of flux/pix2=erg/cm2/s/A/pix2

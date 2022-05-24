@@ -1,12 +1,32 @@
 import params_clean as params
+import os, shutil
 
+#######################################################################################################################
+# Structures output files
+
+if not os.path.exists(params.project_name):
+    os.makedirs(params.project_name)
+else:
+    shutil.rmtree(params.project_name)
+    os.makedirs(params.project_name)
+
+
+#######################################################################################################################
 # List of directories and key files for SEDs, dust models, etc.
+
+outputim     = params.project_name+'/'+params.project_name+'_image' 
+outputimnoise=params.project_name+'/'+params.project_name+'_imageNoise'
+outputspecFL = params.project_name+'/'+params.project_name+'_cube_spectra.fits'
+outputspecL  = params.project_name+'/'+params.project_name+'_Lambda.txt'
+outputstarinfo  = params.project_name+'/'+params.project_name+'_star_info.txt'
 
 #SEDs
 foldersed='SEDs/'
 sed_vega='SEDs/vegaf'
 sed_z1=foldersed+'Z1/'
 sed_z0p5=foldersed+'Z0p5/'
+
+
 
 #Isochrones
 iso_z0p015='Evolutionary/Z0p015.dat'
@@ -19,6 +39,8 @@ elif (params.metallicityZ == 0.5):
     isochrones=iso_z0p008
     foldersed=sed_z0p5
 else: print('!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for LMC)')
+
+
 
 #Interstellar Dust Models
 draine3p1 = 'Dust/Draine3p1.txt'

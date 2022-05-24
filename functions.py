@@ -2,10 +2,16 @@ import numpy as np
 from scipy.linalg import expm
 from math import sqrt,log10
 import params_clean as params
+import directories
+from PIL import Image
+from astropy.io import fits
+import pandas as pd
+
+pi = np.pi
 
 #######################################################################################################################
 # Functions
-pi=np.pi
+
 def myso_logo(wh):
     if (wh == 'logo'):        
         print(' ================================================================================= ')
@@ -280,3 +286,122 @@ def rotation():
         newhcloud=np.multiply(hpar,pc2pixcloud)
     
     return nstar,newx,newy,newz,vxstar,vystar,vzstar,distancestar,newxcloud,newycloud,newzcloud,newhcloud
+
+def noise_for_image(flux,xpix,ypix):
+    fwhm,res,SNR = params.fwhm,params.res,params.SNR
+
+    faintestflux=min(i for i in flux if i > 0)
+    if (params.SNR != 0.0): 
+        noise=faintestflux*4.*log(2.0)/(pi*(fwhm/res)*(fwhm/res))/SNR 
+    else: 
+        noise=params.noise2add
+
+    noise2addim=noise*np.random.rand(int(ypix),int(xpix))
+
+    return faintestflux, noise2addim, noise
+
+def get_iso_params(logagestar,massstar,kzstar,ziso,logageiso,miniiso,mactiso,logliso,logteff,loggiso):
+    # Reading the isochrones
+    # Finding the best match isochrones based on logage and mass
+    # Returns teff, logg, logl of best match
+
+
+    flag = False #Flag for if the mass or age of the star differs by more than 10% from the iso
+
+    teffiso=10.**logteff
+    niso=len(miniiso)
+
+    nage=FINDCLOSE(logagestar,logageiso)
+    selectedage=logageiso[nage]
+
+    if abs(logageiso[nage]-logagestar)/logagestar > 0.1:
+        flag=True
+    # logagestar[ii]=logageiso[nage]
+
+
+    nmetalicity=FINDCLOSE(kzstar,ziso)
+    selectedz=ziso[nmetalicity]
+
+    marrtemp=np.full(niso,999.99)
+
+    for kk in range(niso):  
+        if ((ziso[kk] == selectedz) and (logageiso[kk] == selectedage)):  marrtemp[kk]=mactiso[kk]
+    ns=FINDCLOSE(massstar,marrtemp)
+
+    if abs(marrtemp[ns]-massstar)/massstar > 0.1:
+        flag=True
+
+    return teffiso[ns], loggiso[ns], logliso[ns], flag
+
+def log_output(noise,faintestflux,massstar,logagestar,kzstar,Teffstar,loggstar,loglstar,AVstar,mag,xpos,ypos,readsed,outputstarinfo):
+    lunstarinfo=open(outputstarinfo,"w")
+
+    lunstarinfo.write("#     mass[mo] ,   logage[yr]  ,     Z      , log[Teff[k]] ,    logg    ,   logL/Lo    ,  Av_star   ,      mag     ,    Xpix     ,   Ypix       ,       assignedSED \n")
+    lunstarinfo.write("#       1              2             3            4              5              6           7               8            9            10                   11 \n")
+    
+    for ii in range(len(massstar)):
+        lunstarinfo.write("%13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %60s \n" %(massstar[ii], logagestar[ii],kzstar[ii],log10(Teffstar[ii]),loggstar[ii],loglstar[ii],AVstar[ii],mag[ii],xpos[ii],ypos[ii],readsed[ii]))
+
+    lunstarinfo.write('#faintestflux: %f \n' %(faintestflux)) #calc
+    lunstarinfo.write('#noise:  %f \n' %(noise)) #calc
+
+    lunstarinfo.write('#SNR:  %f \n' %(params.SNR)) #params
+    lunstarinfo.write('#Filter:  %s \n' %(params.filterfile)) #params
+    lunstarinfo.write('#distance:  %f \n' %(params.distance)) #params
+    lunstarinfo.write('#res:  %f \n' %(params.res)) #params
+    lunstarinfo.write('#FoV:  %d %d \n' %(params.fovx,params.fovy)) #params
+    lunstarinfo.write('#fwhm:  %f \n' %(params.fwhm)) #params
+    lunstarinfo.write('#OBtreatment:  %s \n' %(params.OBtreatment)) #params
+    lunstarinfo.write('#Adaptiveoptics:  %s \n' %(params.Adaptiveoptics)) #params
+    lunstarinfo.write('#SR:  %f \n' %(params.SR)) #params
+    lunstarinfo.write('#Seeing:  %f \n' %(params.seeing)) #params
+    lunstarinfo.write('#Spectroscopy:  %s \n' %(params.spectroscopy)) #params
+    if params.spectroscopy=='yes':
+        lunstarinfo.write('#Spectroscopic Resolution:  %f \n' %(params.Rspec)) #params
+        lunstarinfo.write('#Lambda_min:  %f \n' %(params.lminspec)) #params
+        lunstarinfo.write('#Lambda_max:  %f \n' %(params.lmaxspec)) #params
+    lunstarinfo.write('#filestar:  %s \n' %(params.filestar)) #params
+    lunstarinfo.write('#Columndensities:  %s \n' %(params.Columndensities)) #params
+    lunstarinfo.write('#filecloud:  %s \n' %(params.filecloud)) #params
+    lunstarinfo.write('#EXTmodel:  %s \n' %(params.EXTmodel)) #params
+    lunstarinfo.write('#Rv:  %f \n' %(params.Rv)) #params
+    lunstarinfo.close()
+
+def create_image(sceneim,noise2addim,sceneimFL):
+
+    if params.filetype=='fits':
+        hdu = fits.PrimaryHDU(sceneim)
+        hdu.writeto(directories.outputim+'.fits')
+
+        if params.getnoise:
+            hdu = fits.PrimaryHDU(noise2addim)
+            hdu.writeto(directories.outputimnoise+'.fits')
+
+    elif params.filetype=='hdf':
+        df = pd.DataFrame(sceneim)
+        df.to_hdf(directories.outputim+'.hdf','df',mode='w')
+
+        if params.getnoise:
+            df = pd.DataFrame(noise2addim)
+            df.to_hdf(directories.outputimnoise+'.hdf','df',mode='w')
+
+    elif params.filetype=='both':
+        hdu = fits.PrimaryHDU(sceneim)
+        hdu.writeto(directories.outputim+'.fits')
+
+        df = pd.DataFrame(sceneim)
+        df.to_hdf(directories.outputim+'.hdf','df',mode='w')
+
+        if params.getnoise:
+            hdu = fits.PrimaryHDU(noise2addim)
+            hdu.writeto(directories.outputimnoise+'.fits')
+
+            df = pd.DataFrame(noise2addim)
+            df.to_hdf(directories.outputimnoise+'.hdf','df',mode='w')
+
+    else:
+        print("!! No image output created. Please specify either 'fits' or 'hdf' or 'both'")
+
+    if (params.spectroscopy == 'yes'):
+            hdu = fits.PrimaryHDU(sceneimFL)
+            hdu.writeto(directories.outputspecFL)

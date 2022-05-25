@@ -6,12 +6,14 @@ import directories
 from PIL import Image
 from astropy.io import fits
 import pandas as pd
+import constants
 
 pi = np.pi
 
 #######################################################################################################################
 # Functions
 
+# Misc.
 def myso_logo(wh):
     if (wh == 'logo'):        
         print(' ================================================================================= ')
@@ -101,6 +103,8 @@ def FINDCLOSE(par1,pararr):
     nclose=np.argsort(abs(np.add(-par1,pararr)))
     return nclose[0]
 
+
+# Rotation
 def rot_euler(v, xyz):
     ''' Rotate vector v (or array of vectors) by the euler angles xyz '''
     # https://stackoverflow.com/questions/6802577/python-rotation-of-3d-vector
@@ -108,128 +112,6 @@ def rot_euler(v, xyz):
         e = expm(np.cross(np.eye(3), axis*-theta))
         v = np.dot(e, np.array(v))
     return v.T
-
-def Kernel_fn(dr, h):
-    pi=np.pi
-    if (dr/h < 1.0):
-        w = (1/(pi*h**3.)) * (1-1.5*(dr/h)**2. + 0.75*(dr/h)**3.)
-    elif (dr/h < 2.0):
-        w = (1/(pi*h**3.)) * (0.25 * (2.0-(dr/h))**3.)
-    else: w = 0.0
-
-    return w
-  
-def COLUMN_DENSITY(xstar,ystar,zstar,xarr,yarr,zarr,marr,harr):
-    nc=len(marr)
-    den2dtot=0.0
-    for ii in range(nc):
-        if ((sqrt((xstar-xarr[ii])**2+(ystar-yarr[ii])**2) < 2.*harr[ii]) and (zstar < zarr[ii])):
-            dr=sqrt((xstar-xarr[ii])**2+(ystar-yarr[ii])**2)
-            lc=2*sqrt(4.*harr[ii]*harr[ii]-dr*dr)
-            myres=20
-            deltalc=lc/myres
-            denarr=np.zeros(myres)
-            lcarr=np.zeros(myres)
-            for jj in range(myres): denarr[jj]= marr[ii]*Kernel_fn(sqrt(dr*dr+(jj*lc/myres-lc/2.)**2.),harr[ii])*deltalc
-            den2dtot = den2dtot+ np.sum(denarr)
-    return den2dtot
-
-def extinctions(lam,Av,Rv):
-    Alam=0.0  
-    xarr=1./lam
-    if ((xarr >= 0.3) and (xarr < 1.1)):
-      ax1=0.574*(xarr**1.61)
-      bx1=-0.527*(xarr**1.61)
-      Alam=Av*(ax1+bx1/Rv)
-    elif ((xarr >= 1.1) and (xarr < 3.3)):
-      y = xarr-1.82
-      ax2 = 1.0+0.17699*y-0.50447*(y**2.0)-0.02427*(y**3.0)+0.72085*(y**4.0) +0.01979*(y**5.0)-0.77530*(y**6.0)+0.32999*(y**7.0)
-      bx2 = 1.41338*y+2.28305*(y**2.0)+1.07233*(y**3.0)-5.38434*(y**4.0)-0.62251*(y**5.0)+5.30260*(y**6.0) -2.09002*(y**7.0)
-      Alam=Av*(ax2+bx2/Rv)
-    elif ((xarr >= 3.3) and (xarr < 5.9)):
-      ax3 = 1.752 -0.316*xarr-0.104/((xarr-4.67)**2.0 + 0.341)
-      bx3 = (-3.090)+1.825*xarr+1.206/((xarr-4.62)**2.0+0.263)
-      Alam=Av*(ax3+bx3/Rv)
-    elif ((xarr >= 5.9) and (xarr < 8.0)):
-      fax4 = -0.04473*(xarr - 5.9)**2.0 - 0.009779*(xarr -5.9)**3.0
-      fbx4 = 0.2130*(xarr-5.9)**2.0 + 0.1207*(xarr-5.9)**3.0
-      ax4 = 1.752 - 0.316*xarr - (0.104/((xarr - 4.67)**2.0 + 0.341)) +fax4
-      bx4 = -3.090 + 1.825*xarr + (1.206/((xarr - 4.62)**2.0 + 0.263)) +fbx4
-      Alam=Av*(ax4+bx4/Rv)
-    else:  print('Lambda,',lam,', is out of range for Fitzpatrick (1999) model!!!')
-    return Alam
-
-def BCcal(wavelength,flux,lambdaF,weight,AVstar,Rv,Teff,par2vega,EXTmodel,DrainearrLam,DrainearrK): # sed, filter
-    #  BC= Mbol_sun -2.5 log10 [4!PI 10pc^2 Sigma Teff^4 / Lsun] + 2.5 .... Girardi + 2002
-    Mbolsun = 4.77
-    bolconstant = -2.5*log10(4*pi*(3.0857**2.0)*5.67051/3.826)
- 
-    n_wave=len(wavelength)
-    # I put the zero weight at the edges just to solve the problem of edges in linear interpolation
-    weight[0]=0.0
-    weight[len(weight)-1]=0.0
-    wavelength_weight=np.interp(wavelength,lambdaF,weight)
-    par1=0.0
-    par2=0.0
-    alamarr=np.zeros(len(wavelength)) #fltarr((size(wavelength))[-1])
-
-    if (EXTmodel == 'Dmodel'):
-     kappased=np.interp(wavelength,DrainearrLam,DrainearrK)
-     alamarr=AVstar*kappased
-
-  
-    for i in range(1, len(wavelength)):
-      ltemp=wavelength[i]*1.0e-4 
-      if (EXTmodel == 'Fmodel' and wavelength[i] >= 1250. and wavelength[i] <= 33333.):
-          alamarr[i]=extinctions(ltemp,AVstar,Rv)
-      par1 += wavelength[i]*flux[i]*(10.0**(-0.4*alamarr[i]))*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])
-    #     par2 += wavelength[i]*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])  ;!!!! par2 will be calculating from Vega flux
-    BCfilter = Mbolsun + bolconstant - 10.*log10(Teff)+2.5*log10(par1/par2vega)
-    return BCfilter
-
-def BCcals(wavelength,flux,lambdaF,weight,AVstar,Rv,Teff,EXTmodel,DrainearrLam,DrainearrK): # sed, filter
-    #  BC= Mbol_sun -2.5 log10 [4!PI 10pc^2 Sigma Teff^4 / Lsun] + 2.5 .... Girardi + 2002
-    Mbolsun = 4.77
-    bolconstant = -2.5*log10(4*pi*(3.0857**2.0)*5.67051/3.826)
- 
-    n_wave=len(wavelength)
-    # I put the zero weight at the edges just to solve the problem of edges in linear interpolation
-    weight[0]=0.0
-    weight[len(weight)-1]=0.0
-    wavelength_weight=np.interp(wavelength,lambdaF,weight)
-    par1=0.0
-    par2=0.0
-    alamarr=np.zeros(len(wavelength)) #fltarr((size(wavelength))[-1])
-
-    if (EXTmodel == 'Dmodel'):
-     kappased=np.interp(wavelength,DrainearrLam,DrainearrK)
-     alamarr=AVstar*kappased
-
-  
-    for i in range(1, len(wavelength)):
-      ltemp=wavelength[i]*1.0e-4 
-      if (EXTmodel == 'Fmodel' and wavelength[i] >= 1250. and wavelength[i] <= 33333.):
-          alamarr[i]=extinctions(ltemp,AVstar,Rv)
-      par1 += wavelength[i]*flux[i]*(10.0**(-0.4*alamarr[i]))*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])
-      par2 += wavelength[i]*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])  #!!!! par2 will be calculating from Vega flux
-    BCfilter = Mbolsun + bolconstant - 10.*log10(Teff)+2.5*log10(par1/par2)
-    return BCfilter
-
-def makeGaussian(size, fwhm, center):
-    """ Make a square gaussian kernel.
-    size is the length-array of a side of the square
-    fwhm is full-width-half-maximum, which
-    can be thought of as an effective radius.
-    """
-    x = np.arange(0, size[0], 1, float)
-    y = np.arange(0, size[1], 1, float)
-    y = y[:,np.newaxis]
-    if center is None:
-        x0 = y0 = size // 2
-    else:
-        x0 = center[0]
-        y0 = center[1]
-    return np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
 
 def rotation():
     """ Rotates xyz and corresponding velocites by angles alphai, bettai, and gammai respectively.
@@ -287,19 +169,202 @@ def rotation():
     
     return nstar,newx,newy,newz,vxstar,vystar,vzstar,distancestar,newxcloud,newycloud,newzcloud,newhcloud
 
-def noise_for_image(flux,xpix,ypix):
-    fwhm,res,SNR = params.fwhm,params.res,params.SNR
 
-    faintestflux=min(i for i in flux if i > 0)
-    if (params.SNR != 0.0): 
-        noise=faintestflux*4.*log(2.0)/(pi*(fwhm/res)*(fwhm/res))/SNR 
-    else: 
-        noise=params.noise2add
+# Dust and Gas
+def draine_dust_model():
+    DrainearrLam, DrainearrK=[0.0],[0.0]
+    if (params.EXTmodel == 'Dmodel'):
+        DrainearrLamu,drainealbedo,drainecos,draineC,DrainearrKu,drainecos2=np.loadtxt(directories.Drainemodel,usecols=(0,1,2,3,4,5),unpack=True)
+        DrainearrLamu = DrainearrLamu*1.0E+4
+        DrainearrKu = DrainearrKu/constants.DraineKappaV
+        DrainearrLam, DrainearrK = zip(*sorted(zip(DrainearrLamu,DrainearrKu)))
+    return DrainearrLam, DrainearrK
 
-    noise2addim=noise*np.random.rand(int(ypix),int(xpix))
+def Kernel_fn(dr, h):
+    pi=np.pi
+    if (dr/h < 1.0):
+        w = (1/(pi*h**3.)) * (1-1.5*(dr/h)**2. + 0.75*(dr/h)**3.)
+    elif (dr/h < 2.0):
+        w = (1/(pi*h**3.)) * (0.25 * (2.0-(dr/h))**3.)
+    else: w = 0.0
 
-    return faintestflux, noise2addim, noise
+    return w
+  
+def COLUMN_DENSITY(xstar,ystar,zstar,xarr,yarr,zarr,marr,harr):
+    nc=len(marr)
+    den2dtot=0.0
+    for ii in range(nc):
+        if ((sqrt((xstar-xarr[ii])**2+(ystar-yarr[ii])**2) < 2.*harr[ii]) and (zstar < zarr[ii])):
+            dr=sqrt((xstar-xarr[ii])**2+(ystar-yarr[ii])**2)
+            lc=2*sqrt(4.*harr[ii]*harr[ii]-dr*dr)
+            myres=20
+            deltalc=lc/myres
+            denarr=np.zeros(myres)
+            lcarr=np.zeros(myres)
+            for jj in range(myres): denarr[jj]= marr[ii]*Kernel_fn(sqrt(dr*dr+(jj*lc/myres-lc/2.)**2.),harr[ii])*deltalc
+            den2dtot = den2dtot+ np.sum(denarr)
+    return den2dtot
 
+def extinctions(lam,Av,Rv):
+    Alam=0.0  
+    xarr=1./lam
+    if ((xarr >= 0.3) and (xarr < 1.1)):
+      ax1=0.574*(xarr**1.61)
+      bx1=-0.527*(xarr**1.61)
+      Alam=Av*(ax1+bx1/Rv)
+    elif ((xarr >= 1.1) and (xarr < 3.3)):
+      y = xarr-1.82
+      ax2 = 1.0+0.17699*y-0.50447*(y**2.0)-0.02427*(y**3.0)+0.72085*(y**4.0) +0.01979*(y**5.0)-0.77530*(y**6.0)+0.32999*(y**7.0)
+      bx2 = 1.41338*y+2.28305*(y**2.0)+1.07233*(y**3.0)-5.38434*(y**4.0)-0.62251*(y**5.0)+5.30260*(y**6.0) -2.09002*(y**7.0)
+      Alam=Av*(ax2+bx2/Rv)
+    elif ((xarr >= 3.3) and (xarr < 5.9)):
+      ax3 = 1.752 -0.316*xarr-0.104/((xarr-4.67)**2.0 + 0.341)
+      bx3 = (-3.090)+1.825*xarr+1.206/((xarr-4.62)**2.0+0.263)
+      Alam=Av*(ax3+bx3/Rv)
+    elif ((xarr >= 5.9) and (xarr < 8.0)):
+      fax4 = -0.04473*(xarr - 5.9)**2.0 - 0.009779*(xarr -5.9)**3.0
+      fbx4 = 0.2130*(xarr-5.9)**2.0 + 0.1207*(xarr-5.9)**3.0
+      ax4 = 1.752 - 0.316*xarr - (0.104/((xarr - 4.67)**2.0 + 0.341)) +fax4
+      bx4 = -3.090 + 1.825*xarr + (1.206/((xarr - 4.62)**2.0 + 0.263)) +fbx4
+      Alam=Av*(ax4+bx4/Rv)
+    else:  print('Lambda,',lam,', is out of range for Fitzpatrick (1999) model!!!')
+    return Alam
+
+# Filters
+def filters():
+    lambdaF,weight=np.loadtxt(params.filterfile,unpack=True)
+    wavelengthvega,fluxvega=np.loadtxt(directories.sed_vega,unpack=True)
+
+    wavelength_weightvega=np.interp(wavelengthvega,lambdaF,weight)
+    par2vega=0.0
+    for i in range(1, (len(wavelengthvega))):
+      par2vega += fluxvega[i]*wavelengthvega[i]*wavelength_weightvega[i]*(wavelengthvega[i]-wavelengthvega[i-1])
+
+    return lambdaF,weight,par2vega
+
+# Spectroscopy
+def spec_wave_out():
+    Lspecarr=[]
+    sceneimFL = []
+    myso_logo('spec')
+    Lspecarr.append(params.lminspec)
+
+    while (Lspecarr[-1] <= params.lmaxspec): Lspecarr.append(Lspecarr[-1]+Lspecarr[-1]/params.Rspec)
+
+    nspec=len(Lspecarr)
+    sceneL=np.zeros(nspec)
+
+    sceneimFL=np.full((nspec,int(params.ypix),int(params.xpix)),0.0)
+    lun=open(directories.outputspecL,"w")
+    lun.write('# Lambda[A] \n')
+    for ll in range(nspec): lun.write("%f\n" %(Lspecarr[ll]))  
+    lun.close()
+    return sceneimFL,Lspecarr,nspec
+
+def spectroscopy(sceneimFL,nspec,wavelength,lambdaF,weight,flux,Lspecarr,AVstar,Teffstar,DrainearrLam,DrainearrK,loglstar,distancestar,newx,newy,vzstar):
+        for ll in range(2,nspec-3): 
+            #linterp,lambda,weight,wavelength,wavelength_weight
+            wavelength_weight=np.interp(wavelength,lambdaF,weight)
+            # print(np.max(wavelength_weight))
+            # break
+
+            bc3=BCcals(wavelength,flux*wavelength_weight,[Lspecarr[ll-1],Lspecarr[ll],Lspecarr[ll+1],Lspecarr[ll+2]],[0.0,1.0,1.0,0.0],AVstar,params.Rv,Teffstar,params.EXTmodel,DrainearrLam,DrainearrK)
+            mag3=constants.Mbolsun-2.5*loglstar-bc3+5.0*log10(distancestar/10.0)
+            fluxstar3=float(10.**(mag3/(-2.5)))
+            if (params.PSFtype == 'gaussian'):
+                airy3=makeGaussian((params.xpix,params.ypix),params.fwhm/params.res,center=(newx+params.xpix/2.,newy+params.ypix/2.))
+
+            airy3=airy3/(np.sum(airy3))
+
+            if (params.velocitydis == 'yes'):
+                shiftv=vzstar*Lspecarr[ll]/3.0E+5 #shift is in A
+                lambdashift=Lspecarr[ll]-shiftv        #if vz>0 ==> source comes toward observer ==> lambdashift<lamda0 (blue-shift)
+                llchannel=FINDCLOSE(lambdashift,Lspecarr)
+                if (params.Adaptiveoptics == 'yes'): sceneimFL[llchannel,:,:] += fluxstar3*(params.SR*airy3+ (1.0-params.SR)*halo)
+                if (params.Adaptiveoptics == 'no' ): sceneimFL[llchannel,:,:] += fluxstar3*airy3
+
+            elif (params.velocitydis == 'no'):
+                if (params.Adaptiveoptics == 'yes'): sceneimFL[ll,:,:] += fluxstar3*(params.SR*airy3+ (1.0-params.SR)*halo)
+                if (params.Adaptiveoptics == 'no' ): sceneimFL[ll,:,:] += fluxstar3*airy3
+        return sceneimFL 
+
+
+# Bolometric Correction
+def BCcal(wavelength,flux,lambdaF,weight,AVstar,Rv,Teff,par2vega,EXTmodel,DrainearrLam,DrainearrK): # sed, filter
+    #  BC= Mbol_sun -2.5 log10 [4!PI 10pc^2 Sigma Teff^4 / Lsun] + 2.5 .... Girardi + 2002
+ 
+    n_wave=len(wavelength)
+    # I put the zero weight at the edges just to solve the problem of edges in linear interpolation
+    weight[0]=0.0
+    weight[len(weight)-1]=0.0
+    wavelength_weight=np.interp(wavelength,lambdaF,weight)
+    par1=0.0
+    par2=0.0
+    alamarr=np.zeros(len(wavelength)) #fltarr((size(wavelength))[-1])
+
+    if (EXTmodel == 'Dmodel'):
+     kappased=np.interp(wavelength,DrainearrLam,DrainearrK)
+     alamarr=AVstar*kappased
+
+  
+    for i in range(1, len(wavelength)):
+      ltemp=wavelength[i]*1.0e-4 
+      if (EXTmodel == 'Fmodel' and wavelength[i] >= 1250. and wavelength[i] <= 33333.):
+          alamarr[i]=extinctions(ltemp,AVstar,Rv)
+      par1 += wavelength[i]*flux[i]*(10.0**(-0.4*alamarr[i]))*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])
+    #     par2 += wavelength[i]*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])  ;!!!! par2 will be calculating from Vega flux
+    BCfilter = constants.Mbolsun + constants.bolconstant - 10.*np.log10(Teff)+2.5*np.log10(par1/par2vega)
+    return BCfilter
+
+def BCcals(wavelength,flux,lambdaF,weight,AVstar,Rv,Teff,EXTmodel,DrainearrLam,DrainearrK): # sed, filter
+    #  BC= Mbol_sun -2.5 log10 [4!PI 10pc^2 Sigma Teff^4 / Lsun] + 2.5 .... Girardi + 2002
+ 
+    n_wave=len(wavelength)
+    # I put the zero weight at the edges just to solve the problem of edges in linear interpolation
+    weight[0]=0.0
+    weight[len(weight)-1]=0.0
+    wavelength_weight=np.interp(wavelength,lambdaF,weight)
+    par1=0.0
+    par2=0.0
+    alamarr=np.zeros(len(wavelength)) #fltarr((size(wavelength))[-1])
+
+    if (EXTmodel == 'Dmodel'):
+     kappased=np.interp(wavelength,DrainearrLam,DrainearrK)
+     alamarr=AVstar*kappased
+
+  
+    for i in range(1, len(wavelength)):
+        ltemp=wavelength[i]*1.0e-4 
+        if (EXTmodel == 'Fmodel' and wavelength[i] >= 1250. and wavelength[i] <= 33333.):
+            alamarr[i]=extinctions(ltemp,AVstar,Rv)
+
+        if par1==0: par1=1e-9
+        if par2==0: par2=1e-9
+        par1 += wavelength[i]*flux[i]*(10.0**(-0.4*alamarr[i]))*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])
+        par2 += wavelength[i]*wavelength_weight[i]*(wavelength[i]-wavelength[i-1])  #!!!! par2 will be calculating from Vega flux
+    BCfilter = constants.Mbolsun + constants.bolconstant - 10.*np.log10(Teff)+2.5*np.log10(par1/par2)
+    return BCfilter
+
+
+# PSF
+def makeGaussian(size, fwhm, center):
+    """ Make a square gaussian kernel.
+    size is the length-array of a side of the square
+    fwhm is full-width-half-maximum, which
+    can be thought of as an effective radius.
+    """
+    x = np.arange(0, size[0], 1, float)
+    y = np.arange(0, size[1], 1, float)
+    y = y[:,np.newaxis]
+    if center is None:
+        x0 = y0 = size // 2
+    else:
+        x0 = center[0]
+        y0 = center[1]
+    return np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
+
+
+# Isochrones
 def get_iso_params(logagestar,massstar,kzstar,ziso,logageiso,miniiso,mactiso,logliso,logteff,loggiso):
     # Reading the isochrones
     # Finding the best match isochrones based on logage and mass
@@ -333,6 +398,21 @@ def get_iso_params(logagestar,massstar,kzstar,ziso,logageiso,miniiso,mactiso,log
 
     return teffiso[ns], loggiso[ns], logliso[ns], flag
 
+
+# Output
+def noise_for_image(flux):
+    fwhm,res,SNR = params.fwhm,params.res,params.SNR
+
+    faintestflux=min(i for i in flux if i > 0)
+    if (params.SNR != 0.0): 
+        noise=faintestflux*4.*log(2.0)/(pi*(fwhm/res)*(fwhm/res))/SNR 
+    else: 
+        noise=params.noise2add
+
+    noise2addim=noise*np.random.rand(int(params.ypix),int(params.xpix))
+
+    return faintestflux, noise2addim, noise
+
 def log_output(noise,faintestflux,massstar,logagestar,kzstar,Teffstar,loggstar,loglstar,AVstar,mag,xpos,ypos,readsed,outputstarinfo):
     lunstarinfo=open(outputstarinfo,"w")
 
@@ -341,6 +421,8 @@ def log_output(noise,faintestflux,massstar,logagestar,kzstar,Teffstar,loggstar,l
     
     for ii in range(len(massstar)):
         lunstarinfo.write("%13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %13.4f %60s \n" %(massstar[ii], logagestar[ii],kzstar[ii],log10(Teffstar[ii]),loggstar[ii],loglstar[ii],AVstar[ii],mag[ii],xpos[ii],ypos[ii],readsed[ii]))
+
+    lunstarinfo.write('#nstars: %f \n' %(len(massstar)))
 
     lunstarinfo.write('#faintestflux: %f \n' %(faintestflux)) #calc
     lunstarinfo.write('#noise:  %f \n' %(noise)) #calc

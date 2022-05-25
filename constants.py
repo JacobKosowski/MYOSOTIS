@@ -2,6 +2,8 @@ import params_clean as params
 #Constants
 
 Mbolsun = 4.77
+bolconstant = -5.621986050026675 #-2.5*log10(4*pi*(3.0857**2.0)*5.67051/3.826)
+rad2arcsec = 206264.806247 
 
 Draine3p1KappaV=8.551E+03
 Draine4KappaV=8.492E+03

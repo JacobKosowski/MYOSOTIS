@@ -3,7 +3,7 @@ from math import *
 import random
 import numpy as np
 import timeit
-import params_clean as params
+import params
 import functions
 import directories
 import constants
@@ -16,58 +16,36 @@ functions.myso_logo('logo')
 
 #######################################################################################################################
 # Interstellar dust models
-
-DrainearrLam, DrainearrK=[0.0],[0.0]
-if (params.EXTmodel == 'Dmodel'):
-    DrainearrLamu,drainealbedo,drainecos,draineC,DrainearrKu,drainecos2=np.loadtxt(directories.Drainemodel,usecols=(0,1,2,3,4,5),unpack=True)
-    DrainearrLamu = DrainearrLamu*1.0E+4
-    DrainearrKu = DrainearrKu/constants.DraineKappaV
-    DrainearrLam, DrainearrK = zip(*sorted(zip(DrainearrLamu,DrainearrKu)))
+DrainearrLam, DrainearrK = functions.draine_dust_model()
 
 #######################################################################################################################
 # 
+print('FoV: ',params.fovx,'" x ',params.fovy,'" =',int(params.xpix),'[pix] x',int(params.ypix),'[pix]')
+sceneim=np.full((int(params.ypix),int(params.xpix)),0.0)
 
-lambdaF,weight=np.loadtxt(params.filterfile,unpack=True)
 
-xpix=round(params.fovx/params.res)
-ypix=round(params.fovy/params.res)
+lambdaF,weight,par2vega = functions.filters()
 
-print('FoV: ',params.fovx,'" x ',params.fovy,'" =',int(xpix),'[pix] x',int(ypix),'[pix]')
-
-sceneim=np.full((int(ypix),int(xpix)),0.0)
-
-wavelengthvega,fluxvega=np.loadtxt(directories.sed_vega,unpack=True)
-wavelength_weightvega=np.interp(wavelengthvega,lambdaF,weight)
-par2vega=0.0
-for i in range(1, (len(wavelengthvega))):
-  par2vega += fluxvega[i]*wavelengthvega[i]*wavelength_weightvega[i]*(wavelengthvega[i]-wavelengthvega[i-1])
-
-#######################################################################################################################
-# 
-
-Lspecarr=[]
 sceneimFL = []
 if (params.spectroscopy == 'yes'):
-    functions.myso_logo('spec')
-    Lspecarr.append(params.lminspec)
-    while (Lspecarr[-1] <= params.lmaxspec): Lspecarr.append(Lspecarr[-1]+Lspecarr[-1]/params.Rspec)
-    nspec=len(Lspecarr)
-    sceneL=np.zeros(nspec)
-    sceneimFL=np.full((nspec,int(ypix),int(xpix)),0.0)
-    lun=open(directories.outputspecL,"w")
-    lun.write('# Lambda[A] \n')
-    for ll in range(nspec): lun.write("%f\n" %(Lspecarr[ll]))  
-    lun.close()
+    sceneimFL,Lspecarr,nspec = functions.spec_wave_out()
 
 #######################################################################################################################
 # 
 
-massstar,logagestar,kzstar,rhostar=np.loadtxt(params.filestar,usecols=(6,7,8,9),unpack=True)
-if (params.Columndensities == 'sph'): masspar=np.loadtxt(params.filecloud,usecols=(6),unpack=True)
+if params.LTRprovided:
+    massstar,logagestar,kzstar,rhostar,loglstar,Teffstar,loggstar=np.loadtxt(params.filestar,usecols=(6,7,8,9,10,11,12),unpack=True)
+else: 
+    massstar,logagestar,kzstar,rhostar=np.loadtxt(params.filestar,usecols=(6,7,8,9),unpack=True)
+
+
+if (params.Columndensities == 'sph'):
+    masspar=np.loadtxt(params.filecloud,usecols=(6),unpack=True)
+
 
 nstar,newx,newy,newz,vxstar,vystar,vzstar,distancestar,newxcloud,newycloud,newzcloud,newhcloud = functions.rotation()
 
-pc2pixstar=206264.806247/distancestar/params.res 
+pc2pixstar=constants.rad2arcsec/distancestar/params.res 
 
 
 
@@ -78,7 +56,7 @@ teffsed,loggsed,metallicity,lh,vtur,sedname=np.loadtxt(directories.foldersed+'ks
 nseds=len(teffsed)
 sedname=sedname.astype('U64')
 
-if (OBtreatment == 'yes'):
+if (params.OBtreatment == 'yes'):
     teffsedOB,loggsedOB,metallicityOB,sednameOB=np.loadtxt(directories.foldersed+'Tseds.dat',dtype={'names': ('col1', 'col2', 'col3','col4'), 'formats':(float,float,float,'|S60')},usecols=(0,1,2,3),unpack=True)
     nsedsOB=len(teffsedOB)
     functions.myso_logo('tlusty')
@@ -89,7 +67,7 @@ if (OBtreatment == 'yes'):
 
 nfovstars=0
 for ii in range(nstar):
-    if ((abs(newx[ii]) < (xpix/2)-1) and (abs(newy[ii]) < (ypix/2)-1)): # Check if star is within chosen FOV
+    if ((abs(newx[ii]) < (params.xpix/2)-1) and (abs(newy[ii]) < (params.ypix/2)-1)): # Check if star is within chosen FOV
         nfovstars += 1
     else:
         np.delete(logagestar,[ii])
@@ -99,6 +77,11 @@ for ii in range(nstar):
         np.delete(newy,[ii])
         np.delete(newz,[ii])
         np.delete(pc2pixstar,[ii])
+
+        if params.LTRprovided:
+            np.delete(Teffstar,[ii])
+            np.delete(loggstar,[ii])
+            np.delete(loglstar,[ii])
 
 if not params.LTRprovided:
     Teffstar=np.zeros(nfovstars)
@@ -119,7 +102,7 @@ readsed=np.full(nfovstars,None)
 #Inputs
 #   xpix, ypix,newx, newy, newz, newxcloud, newycloud, newzcloud, masspar, newhcloud, pc2pixstar, rhostar, logagestar, massstar, kzstar, ziso, logageiso, miniiso, mactiso, logliso, logteff, loggiso,
 #   Additional inputs********
-T0,T1,T2,T3,T4,T5 = 0,0,0,0,0,0
+T0,T1,T2,T3,T4,T5,T6 = 0,0,0,0,0,0,0
 
 s0 = timeit.default_timer()
 iso_load_flag = True
@@ -154,6 +137,8 @@ for ii in range(nfovstars):
     e = timeit.default_timer()
     T2+=(e-s)
 
+    #############################################################
+    # Matching and finding seds
     s = timeit.default_timer()
     if ((params.OBtreatment == 'no') or (Teffstar[ii] < 15000.)):
 
@@ -186,7 +171,7 @@ for ii in range(nfovstars):
 
     s = timeit.default_timer()
     bc1=functions.BCcal(wavelength,flux,lambdaF,weight,AVstar[ii],params.Rv,Teffstar[ii],par2vega,params.EXTmodel,DrainearrLam,DrainearrK)
-    mag[ii]=constants.Mbolsun-2.5*loglstar[ii]-(bc1)+5.0*log10(distancestar[ii]/10.0)
+    mag[ii]=constants.Mbolsun-2.5*loglstar[ii]-(bc1)+5.0*np.log10(distancestar[ii]/10.0)
     fluxstar[ii]=10.**(mag[ii]/(-2.5))
     e = timeit.default_timer()
     T4+=(e-s)
@@ -195,58 +180,47 @@ for ii in range(nfovstars):
     s = timeit.default_timer()
 
     if (params.PSFtype == 'gaussian'):
-        airy1=functions.makeGaussian((xpix,ypix),params.fwhm/params.res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
+        airy1=functions.makeGaussian((params.xpix,params.ypix),params.fwhm/params.res,center=(newx[ii]+params.xpix/2.,newy[ii]+params.ypix/2.))
 
     airy1=airy1/np.sum(airy1) #to be sure about normaized total flux across FOV 
 
     if (params.Adaptiveoptics == 'yes'):
-        halo=functions.makeGaussian((xpix,ypix),params.seeing/params.res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
+        halo=functions.makeGaussian((params.xpix,params.ypix),params.seeing/params.res,center=(newx[ii]+params.xpix/2.,newy[ii]+params.ypix/2.))
         halo=halo/np.sum(halo)
         sceneim += fluxstar[ii]*(params.SR*airy1+(1.0-params.SR)*halo)
     if (params.Adaptiveoptics == 'no'): sceneim += fluxstar[ii]*airy1
 
-
-    if (params.spectroscopy == 'yes'):
-        for ll in range(2,nspec-3): 
-#                linterp,lambda,weight,wavelength,wavelength_weight
-            wavelength_weight=np.interp(wavelength,lambdaF,weight)
-            bc3=functions.BCcals(wavelength,flux*wavelength_weight,[Lspecarr[ll-1],Lspecarr[ll],Lspecarr[ll+1],Lspecarr[ll+2]],[0.0,1.0,1.0,0.0],AVstar[ii],Rv,Teffstar[ii],params.EXTmodel,DrainearrLam,DrainearrK)
-            mag3=constants.Mbolsun-2.5*loglstar[ii]-bc3+5.0*log10(distancestar[ii]/10.0)
-            fluxstar3=float(10.**(mag3/(-2.5)))
-            if (params.PSFtype == 'gaussian'):
-                airy3=functions.makeGaussian((xpix,ypix),params.fwhm/params.res,center=(newx[ii]+xpix/2.,newy[ii]+ypix/2.))
-
-            airy3=airy3/(np.sum(airy3))
-
-            if (params.velocitydis == 'yes'):
-                shiftv=vzstar[ii]*Lspecarr[ll]/3.0E+5 #shift is in A
-                lambdashift=Lspecarr[ll]-shiftv        #if vz>0 ==> source comes toward observer ==> lambdashift<lamda0 (blue-shift)
-                llchannel=functions.FINDCLOSE(lambdashift,Lspecarr)
-                if (params.Adaptiveoptics == 'yes'): sceneimFL[llchannel,:,:] += fluxstar3*(params.SR*airy3+ (1.0-params.SR)*halo)
-                if (params.Adaptiveoptics == 'no' ): sceneimFL[llchannel,:,:] += fluxstar3*airy3
-
-            elif (params.velocitydis == 'no'):
-                if (params.Adaptiveoptics == 'yes'): sceneimFL[ll,:,:] += fluxstar3*(params.SR*airy3+ (1.0-params.SR)*halo)
-                if (params.Adaptiveoptics == 'no' ): sceneimFL[ll,:,:] += fluxstar3*airy3
     e = timeit.default_timer()
     T5+=(e-s)
+
+    ###############################################################################################
+    # Spectroscopy
+    # Can be removed
+
+    s = timeit.default_timer()  
+    if (params.spectroscopy == 'yes'):
+        sceneimFL = functions.spectroscopy(sceneimFL,nspec,wavelength,lambdaF,weight,flux,Lspecarr,AVstar[ii],Teffstar[ii],DrainearrLam,DrainearrK,loglstar[ii],distancestar[ii],newx[ii],newy[ii],vzstar[ii])
+    
+    e = timeit.default_timer()
+    T6+=(e-s)
+    # break
 #Outputs
 #   nstars, sceneim, sceneimFL,
 e0 = timeit.default_timer()
 T0=(e0-s0)
 
 print('Number of valid stars in the FoV: ',nstars,"\n"
-    "{:.3}".format(T0/60),"{:.3}".format(T1/60),"{:.3}".format(T2/60),"{:.3}".format(T3/60),"{:.3}".format(T4/60),"{:.3}".format(T5/60),'m')
+    "{:.3}".format(T0/60),'[m]',"{:.3}".format(100*T1/T0),"{:.3}".format(100*T2/T0),"{:.3}".format(100*T3/T0),"{:.3}".format(100*T4/T0),"{:.3}".format(100*T5/T0),"{:.3}".format(100*T6/T0),'%')
 
 
-faintestflux, noise2addim, noise = functions.noise_for_image(flux,xpix,ypix)
+faintestflux, noise2addim, noise = functions.noise_for_image(flux)
 
 #######################################################################################################################
 # Create output logs+images and print output filenames and execution time
 
 functions.create_image(sceneim,noise2addim,sceneimFL)
 
-functions.log_output(noise,faintestflux,massstar,logagestar,kzstar,Teffstar,loggstar,loglstar,AVstar,mag,newx+xpix/2.0,newy+ypix/2.0,readsed,directories.outputstarinfo)
+functions.log_output(noise,faintestflux,massstar,logagestar,kzstar,Teffstar,loggstar,loglstar,AVstar,mag,newx+params.xpix/2.0,newy+params.ypix/2.0,readsed,directories.outputstarinfo)
 
 functions.myso_logo('outim')
 print(directories.outputim)

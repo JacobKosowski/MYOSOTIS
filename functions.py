@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import expm
 from math import sqrt,log10
-import params_clean as params
+import params
 import directories
 from PIL import Image
 from astropy.io import fits

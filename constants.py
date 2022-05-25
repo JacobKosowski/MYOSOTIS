@@ -1,4 +1,4 @@
-import params_clean as params
+import params
 #Constants
 
 Mbolsun = 4.77

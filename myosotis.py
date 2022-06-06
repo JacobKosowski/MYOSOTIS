@@ -16,7 +16,7 @@ import pandas as pd
 
 ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Start of runtime code
-raise Exception("Wavelength and Flux loading currently broke. Please fix")
+
 start = timeit.default_timer()
 functions.myso_logo('logo')
 
@@ -96,38 +96,43 @@ e = timeit.default_timer()
 print('Loop 1',(e-s)/60,'[min]')
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 s = timeit.default_timer()
-wavelengths=np.empty
-flux=np.array([])
+
+
 indxs = np.array([0])
+
+nWF = 0
+for ii in range(nfovstars):
+    if 'NextGen' in readsed[ii]:
+        nWF+=21311
+    elif 'fnew' in readsed[ii]:
+        nWF+=1221
+    else:
+        nWF+=19997
+    indxs = np.append(indxs,nWF)
+
+wavelengths = np.empty(nWF)
+flux = np.empty(nWF)
 
 T1 = 0
 T2 = 0
 for ii in range(nfovstars):
     s_ = timeit.default_timer()
     # w,f=np.loadtxt(directories.foldersed+readsed[ii],comments=['fn:', '#'],unpack=True)
-    print(readsed[ii])
     if 'NextGen' in readsed[ii]:
         w,f = np.array(pd.read_csv(directories.foldersed+readsed[ii],comment='#',sep=r'\s+')).T
-  
-    elif 'fnew' in readsed[ii]:
-        w,f = np.array(pd.read_csv(directories.foldersed+readsed[ii],comment='#',sep='\t').dropna(axis=1)).T
-
     else:
         w,f = np.array(pd.read_csv(directories.foldersed+readsed[ii],comment='#',sep='\t').dropna(axis=1)).T
-    
-    print(len(w))
-    # raise Exception("Stop")
-
 
     e_ = timeit.default_timer()
     T1 +=e_-s_
+
     s_ = timeit.default_timer()
-    wavelengths = np.concatenate((wavelengths,w))
-    flux = np.concatenate((flux,f))
-    indxs = np.append(indxs,len(wavelengths))
+    wavelengths[indxs[ii]:indxs[ii+1]] = w
+    flux[indxs[ii]:indxs[ii+1]] = f
     e_ = timeit.default_timer()
     T2 +=e_-s_
-    # print(T1, T2)
+
+print(T1,T2)
 
 e = timeit.default_timer()
 print('Wavelenght/Flux Setup',(e-s)/60,'[min]')

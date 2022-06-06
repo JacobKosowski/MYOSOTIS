@@ -10,6 +10,8 @@ import numba.typed as nt
 from datetime import datetime
 import pandas as pd
 
+class Halt(Exception): pass
+
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 # This version of MYOSOTIS is built for parallelization. It assumes that the user provides Lum, Teff, and Log(g) of the input stars. It does not support spectroscopy.
 # This was made from a copy of myosotis_clean.py
@@ -93,7 +95,7 @@ for ii in range(nstar):
 s = timeit.default_timer()
 AVstar, readsed = parallel_functions.clouds_and_SEDs(nfovstars, sedname,nseds,teffsed,loggsed,sednameOB,nsedsOB,teffsedOB,loggsedOB, newx,newy,newz, newxcloud,newycloud,newzcloud,masspar,newhcloud,rhostar, pc2pixstar,Teffstar,loggstar)
 e = timeit.default_timer()
-print('Loop 1',(e-s)/60,'[min]')
+print('Loop 1:',(e-s)/60,'[min]')
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 s = timeit.default_timer()
 
@@ -103,12 +105,13 @@ indxs = np.array([0])
 nWF = 0
 for ii in range(nfovstars):
     if 'NextGen' in readsed[ii]:
-        nWF+=21311
+        nWF+=21312
     elif 'fnew' in readsed[ii]:
         nWF+=1221
     else:
-        nWF+=19997
+        nWF+=19998
     indxs = np.append(indxs,nWF)
+
 
 wavelengths = np.empty(nWF)
 flux = np.empty(nWF)
@@ -117,11 +120,16 @@ T1 = 0
 T2 = 0
 for ii in range(nfovstars):
     s_ = timeit.default_timer()
+    
+
+    w,f = np.array(pd.read_hdf(directories.foldersed+'merged.hdf',readsed[ii])).T
+
     # w,f=np.loadtxt(directories.foldersed+readsed[ii],comments=['fn:', '#'],unpack=True)
-    if 'NextGen' in readsed[ii]:
-        w,f = np.array(pd.read_csv(directories.foldersed+readsed[ii],comment='#',sep=r'\s+')).T
-    else:
-        w,f = np.array(pd.read_csv(directories.foldersed+readsed[ii],comment='#',sep='\t').dropna(axis=1)).T
+
+    # if 'NextGen' in readsed[ii]:
+    #     w,f = np.array(pd.read_csv(directories.foldersed+readsed[ii],comment='#',sep=r'\s+')).T
+    # else:
+    #     w,f = np.array(pd.read_csv(directories.foldersed+readsed[ii],comment='#',sep='\t').dropna(axis=1)).T
 
     e_ = timeit.default_timer()
     T1 +=e_-s_
@@ -132,15 +140,16 @@ for ii in range(nfovstars):
     e_ = timeit.default_timer()
     T2 +=e_-s_
 
-print(T1,T2)
+
 
 e = timeit.default_timer()
-print('Wavelenght/Flux Setup',(e-s)/60,'[min]')
+# print(T1/(e-s),T2/(e-s))
+print('Wavelenght/Flux Setup:',(e-s)/60,'[min]')
 # #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 s = timeit.default_timer()
 sceneim,fluxstar,mag = parallel_functions.BC_and_PSF(sceneim,nfovstars,newx,newy,wavelengths,flux,indxs,lambdaF,weight,AVstar,Teffstar,loglstar,distancestar,par2vega,DrainearrLam,DrainearrK)
 e = timeit.default_timer()
-print('Loop 2',(e-s)/60,'[min]')
+print('Loop 2:',(e-s)/60,'[min]')
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 

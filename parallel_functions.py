@@ -141,8 +141,8 @@ def makeGaussian(size, fwhm, center):
     x = np.arange(0, size[0], 1)
     y = np.arange(0, size[1], 1)
     if center is None:
-        x0 = np.floor_divide(size[0],2)
-        y0 = np.floor_divide(size[1],2)
+        x0 = size[0]//2
+        y0 = size[1]//2
     else:
         x0 = center[0]
         y0 = center[1]

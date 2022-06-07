@@ -493,3 +493,4 @@ def create_image(sceneim,noise2addim,sceneimFL):
     if (params.spectroscopy == 'yes'):
             hdu = fits.PrimaryHDU(sceneimFL)
             hdu.writeto(directories.outputspecFL)
+

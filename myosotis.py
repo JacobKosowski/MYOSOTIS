@@ -6,11 +6,20 @@ import functions
 import directories
 import constants
 import parallel_functions
+import profile
 import numba.typed as nt
 from datetime import datetime
 import pandas as pd
+import multiprocessing
+from itertools import repeat
 
-class Halt(Exception): pass
+init_time = 0
+loop1_time = 0
+loop2_time = 0
+sedload_time = 0
+data_save_time = 0
+total_time = 0
+
 
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 # This version of MYOSOTIS is built for parallelization. It assumes that the user provides Lum, Teff, and Log(g) of the input stars. It does not support spectroscopy.
@@ -20,6 +29,7 @@ class Halt(Exception): pass
 # Start of runtime code
 
 start = timeit.default_timer()
+s_init = timeit.default_timer()
 functions.myso_logo('logo')
 
 #######################################################################################################################
@@ -47,6 +57,8 @@ if (params.Columndensities == 'sph'):
 
 nstar,newx_,newy_,newz_,vxstar,vystar,vzstar,distancestar,newxcloud,newycloud,newzcloud,newhcloud = functions.rotation()
 newx,newy,newz = newx_,newy_,newz_
+
+profile.prediction(nstar)
 
 pc2pixstar=constants.rad2arcsec/distancestar/params.res 
 
@@ -87,6 +99,9 @@ for ii in range(nstar):
         loggstar = np.delete(loggstar,[jj])
         loglstar = np.delete(loglstar,[jj])
 
+e_init = timeit.default_timer()
+
+init_time = e_init-s_init
 
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 # Parallelization here
@@ -95,12 +110,14 @@ for ii in range(nstar):
 s = timeit.default_timer()
 AVstar, readsed = parallel_functions.clouds_and_SEDs(nfovstars, sedname,nseds,teffsed,loggsed,sednameOB,nsedsOB,teffsedOB,loggsedOB, newx,newy,newz, newxcloud,newycloud,newzcloud,masspar,newhcloud,rhostar, pc2pixstar,Teffstar,loggstar)
 e = timeit.default_timer()
+loop1_time = e-s
 print('Loop 1:',(e-s)/60,'[min]')
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 s = timeit.default_timer()
 
 
-indxs = np.array([0])
+indxs = np.empty(nfovstars+1,dtype=int)
+indxs[0] = 0
 
 nWF = 0
 for ii in range(nfovstars):
@@ -110,11 +127,27 @@ for ii in range(nfovstars):
         nWF+=1221
     else:
         nWF+=19998
-    indxs = np.append(indxs,nWF)
-
+    indxs[ii+1] = nWF
 
 wavelengths = np.empty(nWF)
 flux = np.empty(nWF)
+
+# def loaddata():
+#     Ncpus = 1
+#     pool = multiprocessing.Pool(Ncpus)
+
+#     chunksize = int(len(readsed)/Ncpus)
+#     file = directories.foldersed+'merged.hdf'
+
+
+#     DF = pool.starmap(pd.read_hdf, zip(repeat(file),readsed))
+#     pool.close()
+#     pool.join()
+#     return DF
+    
+
+# if __name__ == '__main__': 
+#     DF = loaddata()
 
 T1 = 0
 T2 = 0
@@ -144,18 +177,21 @@ for ii in range(nfovstars):
 
 e = timeit.default_timer()
 # print(T1/(e-s),T2/(e-s))
+sedload_time = e-s
 print('Wavelenght/Flux Setup:',(e-s)/60,'[min]')
 # #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 s = timeit.default_timer()
 sceneim,fluxstar,mag = parallel_functions.BC_and_PSF(sceneim,nfovstars,newx,newy,wavelengths,flux,indxs,lambdaF,weight,AVstar,Teffstar,loglstar,distancestar,par2vega,DrainearrLam,DrainearrK)
 e = timeit.default_timer()
 print('Loop 2:',(e-s)/60,'[min]')
+loop2_time = e-s
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 print('Number of valid stars in the FoV: ',nfovstars,"\n")
     # "{:.3}".format(T0/60),'[m]',"{:.3}".format(100*T1/T0),"{:.3}".format(100*T2/T0),"{:.3}".format(100*T3/T0),"{:.3}".format(100*T4/T0),"{:.3}".format(100*T5/T0),"{:.3}".format(100*T6/T0),'%')
 
+s = timeit.default_timer()
 
 faintestflux, noise2addim, noise = functions.noise_for_image(fluxstar)
 
@@ -166,6 +202,9 @@ functions.create_image(sceneim,noise2addim,sceneimFL)
 
 functions.log_output(nfovstars,noise,faintestflux,massstar,logagestar,kzstar,Teffstar,loggstar,loglstar,AVstar,mag,newx+params.xpix/2.0,newy+params.ypix/2.0,readsed,directories.outputstarinfo)
 
+e = timeit.default_timer()
+data_save_time = e-s
+
 functions.myso_logo('outim')
 print(directories.outputim)
 print('   ')
@@ -173,7 +212,29 @@ functions.myso_logo('outspec')
 print(directories.outputspecFL)
 print(directories.outputspecL)
 print('   ')
+
 stop = timeit.default_timer()
+total_time=stop-start
 
 print('Simulation time using N core(s): ', (stop - start)/60. ,'[min]')
 print("Date and Time =", datetime.now().strftime("%d/%m/%Y %H:%M:%S")) 
+print("")
+print("init_time:", init_time)
+print("loop1_time:",loop1_time)
+print("loop2_time:",loop2_time)
+print("sedload_time:",sedload_time)
+print("data_save_time:",data_save_time)
+print("total_time:",total_time)
+
+# run = [nfovstars,total_time,init_time,loop1_time,sedload_time,loop2_time,data_save_time]
+
+# def file_write(filename,data):
+#     data = np.array(data)
+#     f = open(filename, "a")
+
+#     for r in data:
+#         f.write(str(r))
+#         f.write("\t")
+#     f.write("\n")
+
+# file_write("output.txt",run)

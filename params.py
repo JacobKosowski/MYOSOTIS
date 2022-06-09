@@ -1,8 +1,11 @@
 #Input parameters for synthetic observation
 
+#Resources
+Ncpus = 16
+
 # Files
-project_name='test_snap_III'
-filterfile='Filters/Generic/Bessell/Generic-Bessell.V.dat'
+project_name='test_snap_IV'
+filterfile='Filters/Generic/Bessell/Generic-Bessell.R.dat'
 # filestar='Examples/Teststar2.txt'
 filestar='Snaps/snap_data.txt'
 filecloud= 'Examples/NoCloud'
@@ -14,7 +17,7 @@ stretchted = False # Stretching only applies for png images
 stretchfactor = 0.5
 
 
-# LTRprovided = True
+LTRprovided = True
 
 
 Columndensities='sph'#'sph'
@@ -45,9 +48,9 @@ Adaptiveoptics='no'
 seeing=0.8
 SR=0.8
 
-# spectroscopy = 'no'     # Spectroscopy output, choose 'yes' or 'no'
-# lminspec     = 5000.    # Minimum wavelength [A] should be set within your filter transparency
-# lmaxspec     = 6000.    # Maximum wavelength [A] 
-# Rspec        = 100 #700      # Spectral resolution (please check your SED library, should not be larger than the resolution of the SEDs)
-# velocitydis  = 'no' 		# Applies Doppler shit to spectra based on stellar velocity
+spectroscopy = 'no'     # Spectroscopy output, choose 'yes' or 'no'
+lminspec     = 5000.    # Minimum wavelength [A] should be set within your filter transparency
+lmaxspec     = 6000.    # Maximum wavelength [A] 
+Rspec        = 100 #700      # Spectral resolution (please check your SED library, should not be larger than the resolution of the SEDs)
+velocitydis  = 'no' 		# Applies Doppler shit to spectra based on stellar velocity
 

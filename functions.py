@@ -419,6 +419,7 @@ def noise_for_image(fluxstar):
 
     return faintestflux, noise2addim, noise
 
+
 def log_output(nfovstars,noise,faintestflux,massstar,logagestar,kzstar,Teffstar,loggstar,loglstar,AVstar,mag,xpos,ypos,readsed,outputstarinfo):
     lunstarinfo=open(outputstarinfo,"w")
 

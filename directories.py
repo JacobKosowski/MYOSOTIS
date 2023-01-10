@@ -14,7 +14,6 @@ def outputdirs():
         shutil.rmtree(outdirs)
         os.makedirs(outdirs)
 
-
 #######################################################################################################################
 # List of directories and key files for SEDs, dust models, etc.
 
@@ -23,7 +22,7 @@ outputimnoise   = outdirs+'/'+params.project_name+'_imageNoise'
 outputspecFL    = outdirs+'/'+params.project_name+'_cube_spectra.fits'
 outputspecL     = outdirs+'/'+params.project_name+'_Lambda.txt'
 outputstarinfo  = outdirs+'/'+params.project_name+'_star_info.txt'
-
+outputspecinfo  = outdirs+'/'+params.project_name+'_spec_info.txt'
 
 #SEDs
 foldersed='SEDs/'
@@ -46,7 +45,7 @@ if (params.metallicityZ == 1.0):
     # foldersed=sed_z1+'CSV/'
 elif (params.metallicityZ == 0.5):
     isochrones=iso_z0p008
-    foldersed=sed_z0p5
+    foldersed=sed_z0p5+'FEA/'
     sedlists=sed_z0p5+sedlists
 else: print('!!!metallicityZ should be 1.0 (for solar metallicity) or 0.5 (for LMC)')
 

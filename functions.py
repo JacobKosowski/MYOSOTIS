@@ -463,35 +463,30 @@ def create_image(sceneim,noise2addim,sceneimFL):
         hdu.writeto(directories.outputim+'.fits')
 
         if params.getnoise:
-            hdu = fits.PrimaryHDU(noise2addim)
-            hdu.writeto(directories.outputimnoise+'.fits')
+            hdunoise = fits.PrimaryHDU(noise2addim)
+            hdunoise.writeto(directories.outputimnoise+'.fits')
 
-    elif params.filetype=='hdf':
-        df = pd.DataFrame(sceneim)
-        df.to_hdf(directories.outputim+'.hdf','df',mode='w')
+    if params.filetype=='png':
 
-        if params.getnoise:
-            df = pd.DataFrame(noise2addim)
-            df.to_hdf(directories.outputimnoise+'.hdf','df',mode='w')
-
-    elif params.filetype=='both':
         hdu = fits.PrimaryHDU(sceneim)
         hdu.writeto(directories.outputim+'.fits')
 
-        df = pd.DataFrame(sceneim)
-        df.to_hdf(directories.outputim+'.hdf','df',mode='w')
-
         if params.getnoise:
-            hdu = fits.PrimaryHDU(noise2addim)
-            hdu.writeto(directories.outputimnoise+'.fits')
+            hdunoise = fits.PrimaryHDU(noise2addim)
+            hdunoise.writeto(directories.outputimnoise+'.fits')
 
-            df = pd.DataFrame(noise2addim)
-            df.to_hdf(directories.outputimnoise+'.hdf','df',mode='w')
+        data = fits.open(directories.outputim+'.fits')[0].data.T
+
+        if params.stretched:
+            dd = 2*np.arctan(data*params.stretchfactor*10**params.stretchpower)/pi
+            plt.imsave(directories.outputim+'.png',dd,cmap=params.colormap)
+        else:
+            plt.imsave(directories.outputim+'.png',data,cmap=params.colormap)
 
     else:
-        print("!! No image output created. Please specify either 'fits' or 'hdf' or 'both'")
+        print("!! No image output created. Please specify either 'fits' or 'png'")
 
     if (params.spectroscopy == 'yes'):
-            hdu = fits.PrimaryHDU(sceneimFL)
-            hdu.writeto(directories.outputspecFL)
+        hdu = fits.PrimaryHDU(sceneimFL)
+        hdu.writeto(directories.outputspecFL)
 

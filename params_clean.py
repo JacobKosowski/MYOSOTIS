@@ -16,10 +16,13 @@ filestar='Snaps/IMF/mcl_IMF75_100k_Rh6_W3.txt'
 filecloud= 'Cloud/NoCloud'
 
 #Output type
-filetype='fits' #Enter 'fits' or 'hdf' for respective image outputs. Enter 'both' to recieve both formats. Note that spectroscopy data can only be written as 'fits'
+filetype='fits' #Enter 'fits' or 'png'. Enter 'png' to recieve both formats. Note that spectroscopy data can only be written as 'fits'
 getnoise = False
-stretchted = False # Stretching only applies for png images
-stretchfactor = 0.5
+
+stretched = True # Stretching only applies for png images
+stretchfactor = 5
+stretchpower = 4
+colormap = "Greys_r" #Use standard matplotlib colormap names
 
 
 LTRprovided = True
@@ -32,9 +35,9 @@ EXTmodel='Dmodel'
 Rv=3.1
 metallicityZ=1.0 #should be 1.0 (for solar) or 0.5 (for LMC). this will affect choosing the evolutionary and atmosphere models
 
-alphai=0.0 #Rotation alpha
-bettai=0.0 #Rotation beta
-gammai=0.0 #Rotation gamma
+alphai=0.0 #Rotation alpha (About X)
+bettai=0.0 #Rotation beta (About Y)
+gammai=0.0 #Rotation gamma (About Z)
 
 res=0.8 #arcsec
 fovx=4000

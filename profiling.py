@@ -10,46 +10,77 @@ sedload_time = 0
 data_save_time = 0
 total_time = 0
 
-#2D Runtime models
-#Feather/Parallel SEDs
-Ptotal_ims = [7.31211070e-05, 5.81019865e-03, 2.92794206e+01]
-Ploop1_ims = [1.11221497e-04, 6.86773320e+00]
-Psed_ims   = [9.29250349e-05, 8.86136853e+00]
-Ploop2_ims = [7.32512615e-05, 5.11335343e-03, 1.33812489e+01]
 
-Ptotal_nst = [7.47156672e-03, 2.47731275e+01]
-Ploop1_nst = [4.01540759e-05, 6.70256429e+00]
-Psed_nst   = [4.13868111e-04, 4.73288399e+00]
-Ploop2_nst = [6.99843293e-03, 1.32249851e+01]
+def runtime_estimate(size,Nstars,stage=3):
+	"""
+	Provides an estimate for the runtime of MYOSOTIS with an expected 16 cores, parallelized.
 
+	Size should be given in number of pixels of either the length or width (assumes square final result)
 
+	Nstars should be given in thousands of stars (e.g. for 50,000 stars --> Nstars=50)
 
-def time_estimate(p_ims,p_nst,nstars):
-	imsize = np.sqrt(params.xpix*params.ypix)
-	return (np.polyval(p_ims,imsize)+np.polyval(p_nst,nstars))/2
+	Each stage corresponds to a different section of the code
+	Stage=0: 1st main loop
+	Stage=1: Loading SEDs
+	Stage=2: Building Image
+	Stage=3: Total
+
+	Time returned is and APPROXIMATION based on a model of previous runs. It is meant to simply provide a ball-park estimate for the total runtime.
+
+	"""
+    X = size
+    Y = Nstars
+    
+    if stage==0:
+        
+        C = [5.62184725e+00, 1.53117324e-05, 1.49842181e-01]
+        Z = C[0] + C[1]*X + C[2]*Y
+        
+    elif stage==1:
+        
+        C = [1.54714513e+00, -5.58590566e-06,  1.08888029e-01]
+        Z = C[0] + C[1]*X + C[2]*Y
+        
+    elif stage==2:
+        
+        C = [ 5.43866311e+01, 2.83294317e-02, 5.76937366e+00, -6.83704301e-06,
+             -2.89454956e-03, -1.08497326e-01, 7.57686955e-10, 1.56529921e-06,
+              1.36483786e-05, 6.29317268e-04]
+        Z = C[0] + C[1]*X + C[2]*Y + C[3]*X**2 + C[4]*X*Y + C[5]*Y**2 + C[6]*X**3 + C[7]*X**2*Y + C[8]*X*Y**2 + C[9]*Y**3
+        
+    elif stage==3:
+    
+        C = [ 6.19789079e+01, 2.81152808e-02, 5.99643648e+00, -6.69729698e-06,
+             -2.89315400e-03, -1.07575622e-01, 7.39577146e-10, 1.56617635e-06,
+              1.35789600e-05, 6.24962899e-04]
+        Z = C[0] + C[1]*X + C[2]*Y + C[3]*X**2 + C[4]*X*Y + C[5]*Y**2 + C[6]*X**3 + C[7]*X**2*Y + C[8]*X*Y**2 + C[9]*Y**3
+    
+    
+    return Z
 
 def prediction(nstars):
 	print("-----------------------------------------------------------------")
-	print("Runtime estimates for "+str(nstars)+" stars and "+str(params.xpix)+"x"+str(params.ypix)+" pixels")
+	print("Runtime estimates for "+str(nstars)+" stars and "+str(params.xpix)+"x"+str(params.ypix)+" pixels, using "+str(params.Ncpus)+" cpus")
 
-	print("Loop 1:", "{:.5}".format(time_estimate(Ploop1_ims,Ploop1_nst,nstars)/60), "[min]")
+	print("Loop 1:\t", "{:.5}".format(runtime_estimate(params.xpix,nstars/1000,stage=0)/60), "[min]")
 
-	print("Loading SEDs:", "{:.5}".format(time_estimate(Psed_ims,Psed_nst,nstars)/60), "[min]")
+	print("Loading SEDs:\t", "{:.5}".format(runtime_estimate(params.xpix,nstars/1000,stage=1)/60), "[min]")
 
-	print("Loop 2:", "{:.5}".format(time_estimate(Ploop2_ims,Ploop2_nst,nstars)/60), "[min]")
+	print("Loop 2:\t", "{:.5}".format(runtime_estimate(params.xpix,nstars/1000,stage=2)/60), "[min]")
 
-	print("Total:", "{:.5}".format(time_estimate(Ptotal_ims,Ptotal_nst,nstars)/60), "[min]")
+	print("Total:\t", "{:.5}".format(runtime_estimate(params.xpix,nstars/1000,stage=3)/60), "[min]")
 
-	print("Estimated time of code completion:", (datetime.now() + timedelta(seconds=time_estimate(Ptotal_ims,Ptotal_nst,nstars))).strftime("%H:%M:%S %d/%m/%Y"))
+	print("Estimated time of code completion:", (datetime.now() + timedelta(seconds=runtime_estimate(params.xpix,nstars/1000,stage=3))).strftime("%H:%M:%S %d/%m/%Y"))
 	print("-----------------------------------------------------------------")
 
 def profiling():
 	print("-----------------------------------------------------------------")
-	print("Initiation:", "\t\t","{:.5}".format(init_time/60), "[min]")
+	print("Runtimes using "+str(params.Ncpus)+" cpus")
+	# print("Initiation:", "\t\t","{:.5}".format(init_time/60), "[min]")
 	print("Loop 1:", "\t\t","{:.5}".format(loop1_time/60), "[min]")
-	print("Loading SEDs ("+str(params.Ncpus)+" cpus):","\t","{:.5}".format(sedload_time/60), "[min]")
+	print("Loading SEDs","\t\t","{:.5}".format(sedload_time/60), "[min]")
 	print("Loop 2:", "\t\t","{:.5}".format(loop2_time/60), "[min]")
-	print("Saving data to file:","\t","{:.5}".format(data_save_time/60), "[min]")
+	# print("Saving data to file:","\t","{:.5}".format(data_save_time/60), "[min]")
 	print("Total:", "\t\t\t","{:.5}".format(total_time/60), "[min]")
 	print("Time of code completion:", datetime.now().strftime("%H:%M:%S"))
 	print("-----------------------------------------------------------------")

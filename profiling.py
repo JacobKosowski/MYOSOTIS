@@ -12,8 +12,7 @@ total_time = 0
 
 
 def runtime_estimate(size,Nstars,stage=3):
-	"""
-	Provides an estimate for the runtime of MYOSOTIS with an expected 16 cores, parallelized.
+	"""Provides an estimate for the runtime of MYOSOTIS with an expected 16 cores, parallelized.
 
 	Size should be given in number of pixels of either the length or width (assumes square final result)
 
@@ -25,38 +24,37 @@ def runtime_estimate(size,Nstars,stage=3):
 	Stage=2: Building Image
 	Stage=3: Total
 
-	Time returned is and APPROXIMATION based on a model of previous runs. It is meant to simply provide a ball-park estimate for the total runtime.
+	Time returned is and APPROXIMATION based on a model of previous runs. It is meant to simply provide a ball-park estimate for the total runtime."""
 
-	"""
-    X = size
-    Y = Nstars
+	X = size
+	Y = Nstars
     
-    if stage==0:
-        
-        C = [5.62184725e+00, 1.53117324e-05, 1.49842181e-01]
-        Z = C[0] + C[1]*X + C[2]*Y
-        
-    elif stage==1:
-        
-        C = [1.54714513e+00, -5.58590566e-06,  1.08888029e-01]
-        Z = C[0] + C[1]*X + C[2]*Y
-        
-    elif stage==2:
-        
-        C = [ 5.43866311e+01, 2.83294317e-02, 5.76937366e+00, -6.83704301e-06,
-             -2.89454956e-03, -1.08497326e-01, 7.57686955e-10, 1.56529921e-06,
-              1.36483786e-05, 6.29317268e-04]
-        Z = C[0] + C[1]*X + C[2]*Y + C[3]*X**2 + C[4]*X*Y + C[5]*Y**2 + C[6]*X**3 + C[7]*X**2*Y + C[8]*X*Y**2 + C[9]*Y**3
-        
-    elif stage==3:
-    
-        C = [ 6.19789079e+01, 2.81152808e-02, 5.99643648e+00, -6.69729698e-06,
-             -2.89315400e-03, -1.07575622e-01, 7.39577146e-10, 1.56617635e-06,
-              1.35789600e-05, 6.24962899e-04]
-        Z = C[0] + C[1]*X + C[2]*Y + C[3]*X**2 + C[4]*X*Y + C[5]*Y**2 + C[6]*X**3 + C[7]*X**2*Y + C[8]*X*Y**2 + C[9]*Y**3
-    
-    
-    return Z
+	if stage==0:
+	    
+	    C = [5.62184725e+00, 1.53117324e-05, 1.49842181e-01]
+	    Z = C[0] + C[1]*X + C[2]*Y
+	    
+	elif stage==1:
+	    
+	    C = [1.54714513e+00, -5.58590566e-06,  1.08888029e-01]
+	    Z = C[0] + C[1]*X + C[2]*Y
+	    
+	elif stage==2:
+	    
+	    C = [ 5.43866311e+01, 2.83294317e-02, 5.76937366e+00, -6.83704301e-06,
+	         -2.89454956e-03, -1.08497326e-01, 7.57686955e-10, 1.56529921e-06,
+	          1.36483786e-05, 6.29317268e-04]
+	    Z = C[0] + C[1]*X + C[2]*Y + C[3]*X**2 + C[4]*X*Y + C[5]*Y**2 + C[6]*X**3 + C[7]*X**2*Y + C[8]*X*Y**2 + C[9]*Y**3
+	    
+	elif stage==3:
+
+	    C = [ 6.19789079e+01, 2.81152808e-02, 5.99643648e+00, -6.69729698e-06,
+	         -2.89315400e-03, -1.07575622e-01, 7.39577146e-10, 1.56617635e-06,
+	          1.35789600e-05, 6.24962899e-04]
+	    Z = C[0] + C[1]*X + C[2]*Y + C[3]*X**2 + C[4]*X*Y + C[5]*Y**2 + C[6]*X**3 + C[7]*X**2*Y + C[8]*X*Y**2 + C[9]*Y**3
+
+
+	return Z
 
 def prediction(nstars):
 	print("-----------------------------------------------------------------")

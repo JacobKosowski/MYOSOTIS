@@ -1,1 +1,1 @@
-#  X1  X2  X3  V1  V2  V3  mass  logage  Z  cloud_density  loglum  teff  logg
+#  X1(pc)  X2(pc)  X3(pc)  V1(km/s)  V2(km/s)  V3(km/s)  mass(Msol)  logage(yr)  Z  cloud_density(Msol/pc2)  loglum(Lsol)  teff(K)  logg(g_sol)
